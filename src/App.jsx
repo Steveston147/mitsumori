@@ -57,6 +57,13 @@ async function copyText(text) {
   }
 }
 
+/** 係数表示用：浮動小数点誤差を隠して綺麗に表示する */
+function roundFactor(x, dp = 3) {
+  if (typeof x !== "number" || !Number.isFinite(x)) return String(x);
+  // dp桁で四捨五入し、末尾ゼロも含めて固定表示（例: 4.212）
+  return x.toFixed(dp);
+}
+
 export default function App() {
   const [programName, setProgramName] =
     useState("（例）カスタムプログラム見積");
@@ -125,7 +132,8 @@ export default function App() {
     if (result.ok) {
       lines.push("");
       lines.push(`基準金額（1週）: ${baseWeeklyPrice}`);
-      lines.push(`係数積（product）: ${result.productFactor}`);
+      // ★ここで表示だけ丸める（計算値はそのまま）
+      lines.push(`係数積（product）: ${roundFactor(result.productFactor, 3)}`);
       lines.push(
         `係数部分（1人あたり）: ${Math.round(result.variablePerStudent)}`
       );
@@ -138,7 +146,22 @@ export default function App() {
       lines.push("※ 入力に不足/未設定があるため、計算できません。");
     }
     return lines.join("\n");
-  }, [result, programName, weeks, participants, baseWeeklyPrice]);
+    // ★依存配列を補強（入力が変わったら確実に更新）
+  }, [
+    result,
+    programName,
+    weeks,
+    participants,
+    baseWeeklyPrice,
+    hasJapaneseLesson,
+    culturalTimes,
+    prepComplexity,
+    lecture,
+    companyVisitTimes,
+    insurancePerStudent,
+    useManualMgmtFee,
+    managementFeePerStudentManual,
+  ]);
 
   const [copyMsg, setCopyMsg] = useState("");
 
