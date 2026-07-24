@@ -64,6 +64,8 @@ function roundFactor(x, dp = 3) {
   return x.toFixed(dp);
 }
 
+const STANDARD_SCENARIO_COUNTS = [10, 15, 20, 25, 30];
+
 export default function App() {
   const [programName, setProgramName] = useState("");
   const [weeks, setWeeks] = useState(2);
@@ -119,6 +121,26 @@ export default function App() {
   );
 
   const result = useMemo(() => calcEstimate(input), [input]);
+
+  const scenarioRows = useMemo(() => {
+    const currentParticipants = Number(participants);
+    const counts = [...STANDARD_SCENARIO_COUNTS];
+
+    if (
+      Number.isInteger(currentParticipants) &&
+      currentParticipants > 0 &&
+      !counts.includes(currentParticipants)
+    ) {
+      counts.push(currentParticipants);
+      counts.sort((a, b) => a - b);
+    }
+
+    return counts.map((count) => ({
+      count,
+      isCurrent: count === currentParticipants,
+      estimate: calcEstimate({ ...input, participants: count }),
+    }));
+  }, [input, participants]);
 
   const breakdownLines = useMemo(() => {
     const f = result.factors ?? {};
@@ -451,6 +473,54 @@ export default function App() {
             </table>
             <div className="small">
               ※ 正式な見積を確定する前に、入力金額と係数の妥当性を確認してください。
+            </div>
+          </div>
+
+          <div className="col-12">
+            <div className="hr" />
+            <label>参加人数別シミュレーション</label>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>参加人数</th>
+                  <th>人数係数</th>
+                  <th>1人あたり</th>
+                  <th>全体合計</th>
+                </tr>
+              </thead>
+              <tbody>
+                {scenarioRows.map(({ count, isCurrent, estimate }) => (
+                  <tr
+                    key={count}
+                    className={isCurrent ? "scenario-current" : undefined}
+                  >
+                    <td>
+                      {count}人
+                      {isCurrent && (
+                        <span className="current-badge">入力中</span>
+                      )}
+                    </td>
+                    <td>
+                      {typeof estimate.factors?.["条件2 参加者数"] === "number"
+                        ? num(estimate.factors["条件2 参加者数"], 2)
+                        : "-"}
+                    </td>
+                    <td>
+                      {estimate.ok
+                        ? yen(Math.round(estimate.totalPerStudent))
+                        : "-"}
+                    </td>
+                    <td>
+                      {estimate.ok
+                        ? yen(Math.round(estimate.totalProgram))
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="small">
+              ※ その他の条件と入力金額はそのままに、参加人数だけを変更して比較しています。
             </div>
           </div>
 
