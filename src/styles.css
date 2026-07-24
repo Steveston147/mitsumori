@@ -269,6 +269,87 @@ textarea {
   display: none;
 }
 
+.visit-card {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #dfe1e5;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.visit-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.visit-card-header h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.cost-table-wrap {
+  overflow-x: auto;
+}
+
+.visit-cost-table {
+  min-width: 820px;
+}
+
+.visit-cost-table th:nth-child(1) {
+  width: 22%;
+}
+
+.visit-cost-table th:nth-child(2),
+.visit-cost-table th:nth-child(3) {
+  width: 14%;
+}
+
+.visit-cost-table th:nth-child(4) {
+  width: 16%;
+}
+
+.visit-cost-table input,
+.visit-cost-table select {
+  min-width: 100px;
+  padding: 8px;
+}
+
+.cost-line-invalid td {
+  background: #fff5d6;
+}
+
+.visit-section-total {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.visit-section-total > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #dfe1e5;
+  border-radius: 10px;
+  background: #fff;
+}
+
+@media (max-width: 860px) {
+  .visit-card-header,
+  .visit-section-total {
+    grid-template-columns: 1fr;
+  }
+
+  .visit-card-header {
+    display: grid;
+  }
+}
+
 @media print {
   @page {
     size: A4;
