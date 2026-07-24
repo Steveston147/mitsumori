@@ -208,3 +208,19 @@ textarea {
   color: #555;
   font-weight: 600;
 }
+
+.scenario-current td {
+  background: #eef7ff;
+  font-weight: 600;
+}
+
+.current-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #d8ecff;
+  color: #173a59;
+  font-size: 11px;
+  font-weight: 600;
+}
