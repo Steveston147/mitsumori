@@ -1,6 +1,7 @@
 export const DEFAULTS = {
-  baseWeeklyPrice: 25000, // 25,000円（1週あたり基準金額）
-  insurancePerStudent: 8000, // 保険（1人あたり）
+  // 実際の価格をソースコードに保存しない。利用時に毎回入力する。
+  baseWeeklyPrice: "",
+  insurancePerStudent: "",
 };
 
 export const PREP_COMPLEXITY = {
@@ -75,21 +76,6 @@ export function companyVisitFactor(times) {
   return 1.6; // 7〜9（9超は表外だが最大に丸める）
 }
 
-// 管理手数料（1人あたり）：ユーザー指定（1〜5週まで確定。6週以上は手入力必須）
-export function managementFeePerStudentAuto(weeks) {
-  const w = Number(weeks);
-  if (!Number.isFinite(w) || w <= 0) return null;
-
-  if (w <= 1) return 20000;
-  if (w <= 2) return 30000;
-  if (w <= 3) return 40000;
-  if (w <= 4) return 50000;
-  if (w <= 5) return 60000;
-
-  // 6週以上は未定義（事故防止で null）
-  return null;
-}
-
 export function calcEstimate(input) {
   const warnings = [];
 
@@ -126,6 +112,7 @@ export function calcEstimate(input) {
   }
 
   // 管理手数料（1人あたり）
+  // 実際の金額をコードに固定しないため、必ず利用時に入力する。
   let mgmtFee = null;
   if (input.useManualMgmtFee) {
     const m = Number(input.managementFeePerStudentManual);
@@ -135,12 +122,7 @@ export function calcEstimate(input) {
       mgmtFee = m;
     }
   } else {
-    mgmtFee = managementFeePerStudentAuto(weeks);
-    if (mgmtFee === null) {
-      warnings.push(
-        "6週以上の管理手数料ルールが未設定です。管理手数料を手入力に切り替えてください。"
-      );
-    }
+    warnings.push("管理手数料を入力してください。");
   }
 
   const factors = {
