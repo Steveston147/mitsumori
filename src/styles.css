@@ -190,6 +190,11 @@ textarea {
   color: #111;
 }
 
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -245,5 +250,110 @@ textarea {
 @media (max-width: 860px) {
   .cost-input-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+.print-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.print-option input {
+  width: auto;
+  margin: 0;
+}
+
+.print-summary {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  :root {
+    background: #fff;
+  }
+
+  body {
+    padding: 0;
+    background: #fff;
+    color: #000;
+  }
+
+  .container {
+    max-width: none;
+    margin: 0;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-summary {
+    display: block;
+    font-size: 11pt;
+  }
+
+  .print-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #000;
+  }
+
+  .print-header h1 {
+    margin: 0 0 4px;
+    font-size: 18pt;
+  }
+
+  .print-subtitle,
+  .print-date {
+    font-size: 9pt;
+    color: #333;
+  }
+
+  .print-summary h2 {
+    margin: 16px 0 6px;
+    font-size: 12pt;
+  }
+
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .print-table th,
+  .print-table td {
+    padding: 6px 8px;
+    border: 1px solid #777;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .print-table th {
+    width: 22%;
+    background: #f2f2f2;
+    font-weight: 600;
+  }
+
+  .print-total th,
+  .print-total td {
+    font-weight: 700;
+  }
+
+  .print-note {
+    margin-top: 18px;
+    padding-top: 8px;
+    border-top: 1px solid #777;
+    font-size: 9pt;
+    line-height: 1.6;
   }
 }
