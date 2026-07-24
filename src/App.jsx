@@ -9,6 +9,9 @@ import { yen, num } from "./lib/format.js";
 import CompanyVisitCosts, {
   createCompanyVisit,
 } from "./components/CompanyVisitCosts.jsx";
+import CulturalActivityCosts, {
+  createCulturalActivity,
+} from "./components/CulturalActivityCosts.jsx";
 
 function Select({ label, value, onChange, options }) {
   return (
@@ -119,6 +122,10 @@ export default function App() {
   const [buildUpCompanyVisits, setBuildUpCompanyVisits] = useState(() => [
     createCompanyVisit(),
   ]);
+  const [buildUpCulturalTimes, setBuildUpCulturalTimes] = useState(1);
+  const [buildUpCulturalActivities, setBuildUpCulturalActivities] = useState(
+    () => [createCulturalActivity()]
+  );
 
   const input = useMemo(
     () => ({
@@ -270,6 +277,8 @@ export default function App() {
     setBuildUpParticipants(15);
     setBuildUpCompanyVisitTimes(1);
     setBuildUpCompanyVisits([createCompanyVisit()]);
+    setBuildUpCulturalTimes(1);
+    setBuildUpCulturalActivities([createCulturalActivity()]);
   }
 
   function updateCostItem(key, value) {
@@ -930,15 +939,34 @@ export default function App() {
               </div>
             </div>
 
+            <div className="col-4">
+              <NumberInput
+                label="日本文化体験（回数）"
+                value={buildUpCulturalTimes}
+                min={0}
+                step={1}
+                onChange={setBuildUpCulturalTimes}
+              />
+              <div className="small">
+                回数に合わせて体験別の入力欄を表示します。
+              </div>
+            </div>
+
             <CompanyVisitCosts
               count={buildUpCompanyVisitTimes}
               visits={buildUpCompanyVisits}
               onChange={setBuildUpCompanyVisits}
             />
 
+            <CulturalActivityCosts
+              count={buildUpCulturalTimes}
+              activities={buildUpCulturalActivities}
+              onChange={setBuildUpCulturalActivities}
+            />
+
             <div className="col-12">
               <div className="build-up-roadmap">
-                日本文化体験、日本語講座、学生共修、共通経費、印刷・PDFは今後のPRで追加します。
+                日本語講座、学生共修、共通経費、印刷・PDFは今後のPRで追加します。
               </div>
               <button
                 className="btn secondary"
