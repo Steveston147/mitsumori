@@ -108,6 +108,7 @@ export default function App() {
   const [managementFeePerStudentManual, setManagementFeePerStudentManual] =
     useState("");
   const [costItems, setCostItems] = useState(createEmptyCostItems);
+  const [includeCostsInPrint, setIncludeCostsInPrint] = useState(false);
 
   const input = useMemo(
     () => ({
@@ -251,21 +252,28 @@ export default function App() {
     setInsurancePerStudent(DEFAULTS.insurancePerStudent);
     setManagementFeePerStudentManual("");
     setCostItems(createEmptyCostItems());
+    setIncludeCostsInPrint(false);
   }
 
   function updateCostItem(key, value) {
     setCostItems((current) => ({ ...current, [key]: value }));
   }
 
+  function onPrint() {
+    window.print();
+  }
+
+  const printDate = new Intl.DateTimeFormat("ja-JP").format(new Date());
+
   return (
     <div className="container">
-      <h1>カスタムプログラム 見積（係数方式）</h1>
-      <p className="sub">
+      <h1 className="no-print">カスタムプログラム 見積（係数方式）</h1>
+      <p className="sub no-print">
         原価積み上げ無し。<b>基準金額 × 条件1〜7の掛率</b>
         で「参加者1人あたり」を算出し、最後に保険＋管理手数料（いずれも1人あたり）を加算します。
       </p>
 
-      <div className="privacy-note">
+      <div className="privacy-note no-print">
         <strong>安全な利用について</strong>
         <div>
           入力内容はこのブラウザ内だけで計算され、サーバーへの送信・保存は行いません。
@@ -273,7 +281,7 @@ export default function App() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="card no-print">
         <div className="grid">
           <div className="col-12">
             <label>案件名（メモ用）</label>
@@ -684,8 +692,149 @@ export default function App() {
             </div>
             {copyMsg && <div className="small">{copyMsg}</div>}
           </div>
+
+          <div className="col-12">
+            <div className="hr" />
+            <label>印刷・PDF保存</label>
+            <label className="print-option">
+              <input
+                type="checkbox"
+                checked={includeCostsInPrint}
+                disabled={!costCheck.ok}
+                onChange={(e) => setIncludeCostsInPrint(e.target.checked)}
+              />
+              <span>原価確認を印刷に含める（内部資料用）</span>
+            </label>
+            <button
+              className="btn"
+              type="button"
+              disabled={!result.ok}
+              onClick={onPrint}
+            >
+              印刷・PDF保存
+            </button>
+            <div className="small">
+              ブラウザの印刷画面で「PDFに保存」を選択できます。
+              原価情報は初期状態では印刷されません。
+            </div>
+          </div>
         </div>
       </div>
+
+      <section className="print-summary">
+        <header className="print-header">
+          <div>
+            <h1>カスタムプログラム 見積サマリー</h1>
+            <div className="print-subtitle">内部確認用・参考試算</div>
+          </div>
+          <div className="print-date">作成日：{printDate}</div>
+        </header>
+
+        <h2>基本条件</h2>
+        <table className="print-table">
+          <tbody>
+            <tr>
+              <th>案件名</th>
+              <td>{programName || "（未入力）"}</td>
+              <th>実施期間</th>
+              <td>{weeks}週</td>
+            </tr>
+            <tr>
+              <th>参加人数</th>
+              <td>{participants}人</td>
+              <th>日本語講座</th>
+              <td>{hasJapaneseLesson ? "有" : "無"}</td>
+            </tr>
+            <tr>
+              <th>文化体験</th>
+              <td>{culturalTimes}回</td>
+              <th>準備の複雑度</th>
+              <td>{prepComplexity}</td>
+            </tr>
+            <tr>
+              <th>講義</th>
+              <td>{lecture}</td>
+              <th>企業訪問</th>
+              <td>{companyVisitTimes}回</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>見積結果</h2>
+        <table className="print-table">
+          <tbody>
+            <tr>
+              <th>基準金額（1週）</th>
+              <td>{result.ok ? yen(Math.round(result.baseWeeklyPrice)) : "-"}</td>
+            </tr>
+            <tr>
+              <th>係数積</th>
+              <td>
+                {result.ok ? `${roundFactor(result.productFactor, 3)}倍` : "-"}
+              </td>
+            </tr>
+            <tr>
+              <th>係数部分（1人）</th>
+              <td>
+                {result.ok ? yen(Math.round(result.variablePerStudent)) : "-"}
+              </td>
+            </tr>
+            <tr>
+              <th>保険（1人）</th>
+              <td>
+                {result.ok ? yen(Math.round(result.insurancePerStudent)) : "-"}
+              </td>
+            </tr>
+            <tr>
+              <th>管理手数料（1人）</th>
+              <td>
+                {result.ok
+                  ? yen(Math.round(result.managementFeePerStudent))
+                  : "-"}
+              </td>
+            </tr>
+            <tr className="print-total">
+              <th>参加者1人あたり</th>
+              <td>{result.ok ? yen(Math.round(result.totalPerStudent)) : "-"}</td>
+            </tr>
+            <tr className="print-total">
+              <th>全体合計</th>
+              <td>{result.ok ? yen(Math.round(result.totalProgram)) : "-"}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {includeCostsInPrint && costCheck.ok && (
+          <>
+            <h2>原価確認（内部情報）</h2>
+            <table className="print-table">
+              <tbody>
+                <tr>
+                  <th>原価合計</th>
+                  <td>{yen(Math.round(costCheck.totalCost))}</td>
+                </tr>
+                <tr>
+                  <th>1人あたり原価</th>
+                  <td>{yen(Math.round(costCheck.costPerParticipant))}</td>
+                </tr>
+                <tr>
+                  <th>参考差額</th>
+                  <td>{yen(Math.round(costCheck.balance))}</td>
+                </tr>
+                <tr>
+                  <th>原価率</th>
+                  <td>{num(costCheck.costRate, 1)}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </>
+        )}
+
+        <p className="print-note">
+          この資料は入力条件に基づく参考試算です。正式な見積を確定する前に、
+          金額・係数・実施条件を確認してください。
+        </p>
+      </section>
     </div>
   );
 }
