@@ -1,8 +1,35 @@
-# React + Vite
+# カスタムプログラム見積（係数方式）
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+短期留学生受入れのカスタムプログラムについて、実施期間、参加人数、
+日本語講座、文化体験、準備の複雑度、講義、企業訪問の条件から
+参加者1人あたりの参考価格と全体合計を試算するブラウザアプリです。
 
-Currently, two official plugins are available
+## PR1時点の位置付け
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 既存の係数方式による計算ロジックを維持しています。
+- 基準金額、保険、管理手数料の実額はソースコードに保存しません。
+- 金額は利用時に毎回入力します。
+- 計算結果は参考値であり、正式な見積金額を自動決定するものではありません。
+
+## データの取扱い
+
+- 入力内容はブラウザ内だけで計算します。
+- データベース、外部API、AIサービスへの送信は行いません。
+- 入力内容のサーバー保存、自動保存、利用者追跡は行いません。
+- 氏名、メールアドレス、学籍番号、電話番号等の個人情報は入力しないでください。
+- 案件名には個人名を使わず、管理用の仮称を使用してください。
+
+ページを再読み込みまたは閉じると、入力内容は保持されません。
+
+## 開発
+
+```bash
+npm install
+npm run dev
+```
+
+本番ビルド：
+
+```bash
+npm run build
+```
