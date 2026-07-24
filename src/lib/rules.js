@@ -76,6 +76,74 @@ export function companyVisitFactor(times) {
   return 1.6; // 7〜9（9超は表外だが最大に丸める）
 }
 
+export function calcCostCheck({
+  costItems = {},
+  participants,
+  estimatedRevenue,
+}) {
+  const hasValue = (value) =>
+    value !== null &&
+    value !== undefined &&
+    String(value).trim() !== "";
+
+  const enteredItems = Object.entries(costItems).filter(([, value]) =>
+    hasValue(value)
+  );
+
+  if (enteredItems.length === 0) {
+    return { ok: false, status: "empty" };
+  }
+
+  const invalidItems = enteredItems.filter(([, value]) => {
+    const amount = Number(value);
+    return !Number.isFinite(amount) || amount < 0;
+  });
+
+  if (invalidItems.length > 0) {
+    return {
+      ok: false,
+      status: "invalid",
+      message: "原価は0円以上の数字で入力してください。",
+    };
+  }
+
+  const participantCount = Number(participants);
+  if (!Number.isFinite(participantCount) || participantCount <= 0) {
+    return {
+      ok: false,
+      status: "invalid",
+      message: "参加人数を正しく入力してください。",
+    };
+  }
+
+  const revenue = Number(estimatedRevenue);
+  if (!Number.isFinite(revenue) || revenue <= 0) {
+    return {
+      ok: false,
+      status: "estimate-unavailable",
+      message: "見積金額の入力を完了すると原価と比較できます。",
+    };
+  }
+
+  const totalCost = enteredItems.reduce(
+    (sum, [, value]) => sum + Number(value),
+    0
+  );
+  const costPerParticipant = totalCost / participantCount;
+  const balance = revenue - totalCost;
+  const costRate = (totalCost / revenue) * 100;
+
+  return {
+    ok: true,
+    status: balance >= 0 ? "covered" : "shortfall",
+    estimatedRevenue: revenue,
+    totalCost,
+    costPerParticipant,
+    balance,
+    costRate,
+  };
+}
+
 export function calcEstimate(input) {
   const warnings = [];
 
