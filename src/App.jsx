@@ -385,6 +385,77 @@ export default function App() {
 
           <div className="col-12">
             <div className="hr" />
+            <label>金額の内訳（1人あたり）</label>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>項目</th>
+                  <th>計算・金額</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>基準金額（1週）</td>
+                  <td>
+                    {result.ok ? yen(Math.round(result.baseWeeklyPrice)) : "-"}
+                  </td>
+                </tr>
+                <tr>
+                  <td>係数積</td>
+                  <td>
+                    {result.ok
+                      ? `${roundFactor(result.productFactor, 3)} 倍`
+                      : "-"}
+                  </td>
+                </tr>
+                <tr>
+                  <td>係数部分</td>
+                  <td>
+                    {result.ok
+                      ? `${yen(Math.round(result.baseWeeklyPrice))} × ${roundFactor(
+                          result.productFactor,
+                          3
+                        )} = ${yen(Math.round(result.variablePerStudent))}`
+                      : "-"}
+                  </td>
+                </tr>
+                <tr>
+                  <td>保険</td>
+                  <td>
+                    {result.ok
+                      ? yen(Math.round(result.insurancePerStudent))
+                      : "-"}
+                  </td>
+                </tr>
+                <tr>
+                  <td>管理手数料</td>
+                  <td>
+                    {result.ok
+                      ? yen(Math.round(result.managementFeePerStudent))
+                      : "-"}
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong>合計</strong>
+                  </td>
+                  <td>
+                    <strong>
+                      {result.ok
+                        ? yen(Math.round(result.totalPerStudent))
+                        : "-"}
+                    </strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div className="small">
+              ※ 正式な見積を確定する前に、入力金額と係数の妥当性を確認してください。
+            </div>
+          </div>
+
+          <div className="col-12">
+            <div className="hr" />
             <label>掛率の内訳</label>
             <table className="table">
               <thead>
