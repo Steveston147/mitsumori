@@ -65,8 +65,7 @@ function roundFactor(x, dp = 3) {
 }
 
 export default function App() {
-  const [programName, setProgramName] =
-    useState("（例）カスタムプログラム見積");
+  const [programName, setProgramName] = useState("");
   const [weeks, setWeeks] = useState(2);
   const [participants, setParticipants] = useState(15);
 
@@ -84,7 +83,7 @@ export default function App() {
     DEFAULTS.insurancePerStudent
   );
 
-  const [useManualMgmtFee, setUseManualMgmtFee] = useState(false);
+  const [useManualMgmtFee] = useState(true);
   const [managementFeePerStudentManual, setManagementFeePerStudentManual] =
     useState("");
 
@@ -176,7 +175,7 @@ export default function App() {
   }
 
   function onReset() {
-    setProgramName("（例）カスタムプログラム見積");
+    setProgramName("");
     setWeeks(2);
     setParticipants(15);
     setHasJapaneseLesson(true);
@@ -186,7 +185,6 @@ export default function App() {
     setCompanyVisitTimes(1);
     setBaseWeeklyPrice(DEFAULTS.baseWeeklyPrice);
     setInsurancePerStudent(DEFAULTS.insurancePerStudent);
-    setUseManualMgmtFee(false);
     setManagementFeePerStudentManual("");
   }
 
@@ -198,6 +196,14 @@ export default function App() {
         で「参加者1人あたり」を算出し、最後に保険＋管理手数料（いずれも1人あたり）を加算します。
       </p>
 
+      <div className="privacy-note">
+        <strong>安全な利用について</strong>
+        <div>
+          入力内容はこのブラウザ内だけで計算され、サーバーへの送信・保存は行いません。
+          氏名、メールアドレス、学籍番号などの個人情報は入力しないでください。
+        </div>
+      </div>
+
       <div className="card">
         <div className="grid">
           <div className="col-12">
@@ -205,8 +211,11 @@ export default function App() {
             <input
               value={programName}
               onChange={(e) => setProgramName(e.target.value)}
-              placeholder="例：OU 2026 Summer Custom Program"
+              placeholder="例：2027冬・2週間（個人名は入力しない）"
             />
+            <div className="small">
+              大学担当者名、参加者名、メールアドレス等は入力しないでください。
+            </div>
           </div>
 
           <div className="col-3">
@@ -298,7 +307,9 @@ export default function App() {
               step={1000}
               onChange={setBaseWeeklyPrice}
             />
-            <div className="small">初期値：25,000円</div>
+            <div className="small">
+              実価格はコードに保存されていません。利用時に入力してください。
+            </div>
           </div>
 
           <div className="col-4">
@@ -309,44 +320,28 @@ export default function App() {
               step={500}
               onChange={setInsurancePerStudent}
             />
-            <div className="small">初期値：8,000円</div>
+            <div className="small">
+              実価格はコードに保存されていません。利用時に入力してください。
+            </div>
           </div>
 
           <div className="col-4">
             <label>管理手数料（1人あたり）</label>
-            <div className="row">
-              <button
-                className={"btn secondary"}
-                type="button"
-                onClick={() => setUseManualMgmtFee(false)}
-              >
-                自動
-              </button>
-              <button
-                className={"btn secondary"}
-                type="button"
-                onClick={() => setUseManualMgmtFee(true)}
-              >
-                手入力
-              </button>
-            </div>
             <div className="small">
-              1〜5週は自動（20k/30k/40k/50k/60k）。6週以上は未定義なので手入力推奨。
+              実際の管理手数料をコードに固定しないため、毎回手入力します。
             </div>
           </div>
 
-          {useManualMgmtFee && (
-            <div className="col-4">
-              <NumberInput
-                label="管理手数料（手入力・1人あたり）"
-                value={managementFeePerStudentManual}
-                min={0}
-                step={1000}
-                onChange={setManagementFeePerStudentManual}
-                placeholder="例：70000"
-              />
-            </div>
-          )}
+          <div className="col-4">
+            <NumberInput
+              label="管理手数料（手入力・1人あたり）"
+              value={managementFeePerStudentManual}
+              min={0}
+              step={1000}
+              onChange={setManagementFeePerStudentManual}
+              placeholder="金額を入力"
+            />
+          </div>
 
           <div className="col-12">
             {result.warnings?.length ? (
