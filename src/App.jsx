@@ -89,6 +89,7 @@ function createEmptyCostItems() {
 }
 
 export default function App() {
+  const [calculationMode, setCalculationMode] = useState("factor");
   const [programName, setProgramName] = useState("");
   const [weeks, setWeeks] = useState(2);
   const [participants, setParticipants] = useState(15);
@@ -112,7 +113,10 @@ export default function App() {
     useState("");
   const [costItems, setCostItems] = useState(createEmptyCostItems);
   const [includeCostsInPrint, setIncludeCostsInPrint] = useState(false);
-  const [companyVisits, setCompanyVisits] = useState(() => [
+  const [buildUpProgramName, setBuildUpProgramName] = useState("");
+  const [buildUpParticipants, setBuildUpParticipants] = useState(15);
+  const [buildUpCompanyVisitTimes, setBuildUpCompanyVisitTimes] = useState(1);
+  const [buildUpCompanyVisits, setBuildUpCompanyVisits] = useState(() => [
     createCompanyVisit(),
   ]);
 
@@ -259,7 +263,13 @@ export default function App() {
     setManagementFeePerStudentManual("");
     setCostItems(createEmptyCostItems());
     setIncludeCostsInPrint(false);
-    setCompanyVisits([createCompanyVisit()]);
+  }
+
+  function onBuildUpReset() {
+    setBuildUpProgramName("");
+    setBuildUpParticipants(15);
+    setBuildUpCompanyVisitTimes(1);
+    setBuildUpCompanyVisits([createCompanyVisit()]);
   }
 
   function updateCostItem(key, value) {
@@ -274,7 +284,28 @@ export default function App() {
 
   return (
     <div className="container">
-      <h1 className="no-print">カスタムプログラム 見積（係数方式）</h1>
+      <h1 className="no-print">カスタムプログラム 見積</h1>
+      <div className="mode-tabs no-print" role="group" aria-label="見積方式">
+        <button
+          className={`mode-tab ${calculationMode === "factor" ? "active" : ""}`}
+          type="button"
+          aria-pressed={calculationMode === "factor"}
+          onClick={() => setCalculationMode("factor")}
+        >
+          係数方式
+        </button>
+        <button
+          className={`mode-tab ${calculationMode === "build-up" ? "active" : ""}`}
+          type="button"
+          aria-pressed={calculationMode === "build-up"}
+          onClick={() => setCalculationMode("build-up")}
+        >
+          積み上げ方式
+        </button>
+      </div>
+
+      <div hidden={calculationMode !== "factor"}>
+      <h2 className="mode-title no-print">係数方式</h2>
       <p className="sub no-print">
         原価積み上げ無し。<b>基準金額 × 条件1〜7の掛率</b>
         で「参加者1人あたり」を算出し、最後に保険＋管理手数料（いずれも1人あたり）を加算します。
@@ -537,12 +568,6 @@ export default function App() {
               ※ 正式な見積を確定する前に、入力金額と係数の妥当性を確認してください。
             </div>
           </div>
-
-          <CompanyVisitCosts
-            count={companyVisitTimes}
-            visits={companyVisits}
-            onChange={setCompanyVisits}
-          />
 
           <div className="col-12">
             <div className="hr" />
@@ -848,6 +873,84 @@ export default function App() {
           金額・係数・実施条件を確認してください。
         </p>
       </section>
+      </div>
+
+      <div hidden={calculationMode !== "build-up"}>
+        <h2 className="mode-title no-print">積み上げ方式</h2>
+        <p className="sub no-print">
+          実施内容ごとの単価・回数・付随経費を入力し、直接経費を積み上げます。
+          現在は企業訪問に対応しています。
+        </p>
+
+        <div className="privacy-note no-print">
+          <strong>安全な利用について</strong>
+          <div>
+            入力内容はこのブラウザ内だけで計算され、サーバーへの送信・保存は行いません。
+            氏名、メールアドレス、学籍番号などの個人情報は入力しないでください。
+          </div>
+        </div>
+
+        <div className="card no-print">
+          <div className="grid">
+            <div className="col-8">
+              <label>案件名（積み上げ方式用・メモ）</label>
+              <input
+                value={buildUpProgramName}
+                onChange={(e) => setBuildUpProgramName(e.target.value)}
+                placeholder="例：2027冬・直接経費試算（個人名は入力しない）"
+              />
+              <div className="small">
+                大学担当者名、参加者名、メールアドレス等は入力しないでください。
+              </div>
+            </div>
+
+            <div className="col-4">
+              <NumberInput
+                label="参加人数（見込み）"
+                value={buildUpParticipants}
+                min={1}
+                step={1}
+                onChange={setBuildUpParticipants}
+              />
+              <div className="small">
+                今後の1人あたり費用計算で利用します。
+              </div>
+            </div>
+
+            <div className="col-4">
+              <NumberInput
+                label="企業訪問（回数）"
+                value={buildUpCompanyVisitTimes}
+                min={0}
+                step={1}
+                onChange={setBuildUpCompanyVisitTimes}
+              />
+              <div className="small">
+                回数に合わせて訪問別の入力欄を表示します。
+              </div>
+            </div>
+
+            <CompanyVisitCosts
+              count={buildUpCompanyVisitTimes}
+              visits={buildUpCompanyVisits}
+              onChange={setBuildUpCompanyVisits}
+            />
+
+            <div className="col-12">
+              <div className="build-up-roadmap">
+                日本文化体験、日本語講座、学生共修、共通経費、印刷・PDFは今後のPRで追加します。
+              </div>
+              <button
+                className="btn secondary"
+                type="button"
+                onClick={onBuildUpReset}
+              >
+                積み上げ入力をリセット
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
