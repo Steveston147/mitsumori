@@ -26,6 +26,42 @@ h1 {
   margin: 0 0 8px;
 }
 
+.mode-title {
+  margin: 18px 0 6px;
+  font-size: 18px;
+}
+
+.mode-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 16px 0 4px;
+  padding: 5px;
+  border: 1px solid #d8d8dd;
+  border-radius: 12px;
+  background: #eeeef1;
+}
+
+.mode-tab {
+  border-color: transparent;
+  background: transparent;
+  color: #555;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mode-tab.active {
+  border-color: #b8d4ee;
+  background: #fff;
+  color: #173a59;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.mode-tab:focus-visible {
+  outline: 3px solid rgba(43, 111, 168, 0.25);
+  outline-offset: 1px;
+}
+
 .sub {
   margin: 0 0 18px;
   color: #444;
@@ -70,6 +106,9 @@ h1 {
 .col-6 {
   grid-column: span 6;
 }
+.col-8 {
+  grid-column: span 8;
+}
 .col-12 {
   grid-column: span 12;
 }
@@ -77,7 +116,8 @@ h1 {
 @media (max-width: 860px) {
   .col-3,
   .col-4,
-  .col-6 {
+  .col-6,
+  .col-8 {
     grid-column: span 12;
   }
 }
@@ -139,6 +179,16 @@ textarea {
   border-radius: 10px;
   padding: 10px;
   font-size: 13px;
+}
+
+.build-up-roadmap {
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  border: 1px dashed #b8d4ee;
+  border-radius: 10px;
+  background: #f7fbff;
+  color: #34536d;
+  font-size: 12px;
 }
 
 .hr {
