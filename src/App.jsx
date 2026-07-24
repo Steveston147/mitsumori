@@ -6,6 +6,9 @@ import {
   PREP_COMPLEXITY,
 } from "./lib/rules.js";
 import { yen, num } from "./lib/format.js";
+import CompanyVisitCosts, {
+  createCompanyVisit,
+} from "./components/CompanyVisitCosts.jsx";
 
 function Select({ label, value, onChange, options }) {
   return (
@@ -109,6 +112,9 @@ export default function App() {
     useState("");
   const [costItems, setCostItems] = useState(createEmptyCostItems);
   const [includeCostsInPrint, setIncludeCostsInPrint] = useState(false);
+  const [companyVisits, setCompanyVisits] = useState(() => [
+    createCompanyVisit(),
+  ]);
 
   const input = useMemo(
     () => ({
@@ -253,6 +259,7 @@ export default function App() {
     setManagementFeePerStudentManual("");
     setCostItems(createEmptyCostItems());
     setIncludeCostsInPrint(false);
+    setCompanyVisits([createCompanyVisit()]);
   }
 
   function updateCostItem(key, value) {
@@ -530,6 +537,12 @@ export default function App() {
               ※ 正式な見積を確定する前に、入力金額と係数の妥当性を確認してください。
             </div>
           </div>
+
+          <CompanyVisitCosts
+            count={companyVisitTimes}
+            visits={companyVisits}
+            onChange={setCompanyVisits}
+          />
 
           <div className="col-12">
             <div className="hr" />
