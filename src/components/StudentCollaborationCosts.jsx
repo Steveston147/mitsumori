@@ -3,13 +3,43 @@ import { createPortal } from "react-dom";
 import { yen } from "../lib/format.js";
 import { TAX_MODE_OPTIONS } from "../lib/costing.js";
 
+const CALC_MODE_OPTIONS = [
+  { value: "perSession", label: "1回あたり定額" },
+  { value: "perPerson", label: "1人あたり" },
+];
+
 const INITIAL_VALUES = {
-  students: "1",
+  participants: "15",
   sessions: "1",
   lines: [
-    { key: "honorarium", label: "学生協力費", unitPrice: "", taxMode: "included" },
-    { key: "transport", label: "交通費", unitPrice: "", taxMode: "included" },
-    { key: "meal", label: "食費・軽食", unitPrice: "", taxMode: "included" },
+    {
+      key: "activityFee",
+      label: "共修・体験実施費",
+      unitPrice: "",
+      calcMode: "perSession",
+      taxMode: "included",
+    },
+    {
+      key: "admission",
+      label: "入場料・拝観料",
+      unitPrice: "",
+      calcMode: "perPerson",
+      taxMode: "included",
+    },
+    {
+      key: "transport",
+      label: "交通・移動費",
+      unitPrice: "",
+      calcMode: "perSession",
+      taxMode: "included",
+    },
+    {
+      key: "other",
+      label: "その他",
+      unitPrice: "",
+      calcMode: "perSession",
+      taxMode: "included",
+    },
   ],
 };
 
@@ -17,32 +47,63 @@ function hasValue(value) {
   return value !== null && value !== undefined && String(value).trim() !== "";
 }
 
-export function calcStudentCollaborationCost({ students, sessions, lines }) {
-  const studentCount = Number(students);
+export function calcStudentCollaborationCost({ participants, sessions, lines }) {
+  const participantCount = Number(participants);
   const sessionCount = Number(sessions);
 
   if (
-    !Number.isFinite(studentCount) ||
-    studentCount <= 0 ||
-    !Number.isInteger(studentCount) ||
+    !Number.isFinite(participantCount) ||
+    participantCount <= 0 ||
+    !Number.isInteger(participantCount) ||
     !Number.isFinite(sessionCount) ||
     sessionCount <= 0 ||
     !Number.isInteger(sessionCount)
   ) {
-    return { ok: false, status: "invalid", rows: [], subtotal: 0, taxAmount: 0, total: 0 };
+    return {
+      ok: false,
+      status: "invalid",
+      rows: [],
+      subtotal: 0,
+      taxAmount: 0,
+      total: 0,
+    };
   }
 
   const rows = lines.map((line) => {
     if (!hasValue(line.unitPrice)) {
-      return { ...line, ok: true, status: "empty", subtotal: 0, taxAmount: 0, total: 0 };
+      return {
+        ...line,
+        ok: true,
+        status: "empty",
+        multiplier: 0,
+        subtotal: 0,
+        taxAmount: 0,
+        total: 0,
+      };
     }
 
     const unitPrice = Number(line.unitPrice);
-    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
-      return { ...line, ok: false, status: "invalid", subtotal: 0, taxAmount: 0, total: 0 };
+    if (
+      !Number.isFinite(unitPrice) ||
+      unitPrice < 0 ||
+      !["perSession", "perPerson"].includes(line.calcMode)
+    ) {
+      return {
+        ...line,
+        ok: false,
+        status: "invalid",
+        multiplier: 0,
+        subtotal: 0,
+        taxAmount: 0,
+        total: 0,
+      };
     }
 
-    const subtotal = unitPrice * studentCount * sessionCount;
+    const multiplier =
+      line.calcMode === "perPerson"
+        ? participantCount * sessionCount
+        : sessionCount;
+    const subtotal = unitPrice * multiplier;
     let taxAmount = 0;
     let total = subtotal;
 
@@ -52,10 +113,26 @@ export function calcStudentCollaborationCost({ students, sessions, lines }) {
     } else if (line.taxMode === "included") {
       taxAmount = Math.round((subtotal * 10) / 110);
     } else if (line.taxMode !== "exempt") {
-      return { ...line, ok: false, status: "invalid", subtotal: 0, taxAmount: 0, total: 0 };
+      return {
+        ...line,
+        ok: false,
+        status: "invalid",
+        multiplier: 0,
+        subtotal: 0,
+        taxAmount: 0,
+        total: 0,
+      };
     }
 
-    return { ...line, ok: true, status: "calculated", subtotal, taxAmount, total };
+    return {
+      ...line,
+      ok: true,
+      status: "calculated",
+      multiplier,
+      subtotal,
+      taxAmount,
+      total,
+    };
   });
 
   const hasInput = rows.some((row) => row.status === "calculated");
@@ -95,14 +172,14 @@ function StudentCalculator() {
   return (
     <div className="col-12">
       <div className="hr" />
-      <label>学生共修の直接経費</label>
+      <label>学生共修・学内文化活動の直接経費</label>
       <div className="small">
-        1人1回あたり単価 × 協力学生数 × 実施回数で計算します。
+        基本は「1回あたり定額 × 実施回数」で計算します。入場料・拝観料など、人数に応じて増える項目だけ「1人あたり」を選択できます。
       </div>
 
       <section className="visit-card">
         <div className="visit-card-header">
-          <h3>学生共修</h3>
+          <h3>学生共修・学内文化活動</h3>
           <strong>
             合計：{result.status === "calculated" ? yen(Math.round(result.total)) : "-"}
           </strong>
@@ -110,13 +187,13 @@ function StudentCalculator() {
 
         <div className="cost-input-grid">
           <label>
-            協力学生数
+            参加人数
             <input
               type="number"
               min="1"
               step="1"
-              value={values.students}
-              onChange={(event) => update("students", event.target.value)}
+              value={values.participants}
+              onChange={(event) => update("participants", event.target.value)}
             />
           </label>
           <label>
@@ -136,8 +213,10 @@ function StudentCalculator() {
             <thead>
               <tr>
                 <th>経費項目</th>
-                <th>1人1回あたり単価</th>
+                <th>計算方式</th>
+                <th>単価</th>
                 <th>税区分</th>
+                <th>計算条件</th>
                 <th>消費税</th>
                 <th>小計</th>
               </tr>
@@ -147,13 +226,26 @@ function StudentCalculator() {
                 <tr key={row.key} className={!row.ok ? "cost-line-invalid" : undefined}>
                   <td>{row.label}</td>
                   <td>
+                    <select
+                      value={values.lines[index].calcMode}
+                      aria-label={`${row.label}の計算方式`}
+                      onChange={(event) => updateLine(index, "calcMode", event.target.value)}
+                    >
+                      {CALC_MODE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
                     <input
                       type="number"
                       min="0"
                       step="100"
                       value={values.lines[index].unitPrice}
                       placeholder="金額"
-                      aria-label={`${row.label}の1人1回あたり単価`}
+                      aria-label={`${row.label}の単価`}
                       onChange={(event) => updateLine(index, "unitPrice", event.target.value)}
                     />
                   </td>
@@ -170,6 +262,13 @@ function StudentCalculator() {
                       ))}
                     </select>
                   </td>
+                  <td>
+                    {row.status === "calculated"
+                      ? row.calcMode === "perPerson"
+                        ? `${values.participants}人 × ${values.sessions}回`
+                        : `${values.sessions}回`
+                      : "-"}
+                  </td>
                   <td>{row.status === "calculated" ? yen(Math.round(row.taxAmount)) : "-"}</td>
                   <td>{row.status === "calculated" ? yen(Math.round(row.total)) : "-"}</td>
                 </tr>
@@ -180,16 +279,16 @@ function StudentCalculator() {
 
         {!result.ok && (
           <div className="warn">
-            協力学生数と実施回数は1以上の整数、各単価は0円以上で入力してください。
+            参加人数と実施回数は1以上の整数、各単価は0円以上で入力してください。
           </div>
         )}
 
+        <div className="small">
+          例：茶道研究会・和太鼓ドンの謝礼は「1回あたり定額」、仁和寺ツアーの拝観料は「1人あたり」を選択します。
+        </div>
+
         <table className="table">
           <tbody>
-            <tr>
-              <th>計算条件</th>
-              <td>{values.students}人 × {values.sessions}回</td>
-            </tr>
             <tr>
               <th>税計算前金額</th>
               <td>{result.status === "calculated" ? yen(Math.round(result.subtotal)) : "-"}</td>
@@ -199,8 +298,10 @@ function StudentCalculator() {
               <td>{result.status === "calculated" ? yen(Math.round(result.taxAmount)) : "-"}</td>
             </tr>
             <tr>
-              <th>学生共修合計</th>
-              <td><strong>{result.status === "calculated" ? yen(Math.round(result.total)) : "-"}</strong></td>
+              <th>学生共修・学内文化活動合計</th>
+              <td>
+                <strong>{result.status === "calculated" ? yen(Math.round(result.total)) : "-"}</strong>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -211,7 +312,7 @@ function StudentCalculator() {
       </section>
 
       <div className="small">
-        ※ 消費税は各行で1円未満を四捨五入します。学生共修の直接経費だけを計算し、
+        ※ 消費税は各行で1円未満を四捨五入します。学生共修・学内文化活動の直接経費だけを計算し、
         共通経費・販管費・全体原価への自動加算は行いません。
       </div>
     </div>
