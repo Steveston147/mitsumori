@@ -1,5 +1,10 @@
 import React, { useMemo, useState } from "react";
-import { calcEstimate, DEFAULTS, PREP_COMPLEXITY } from "./lib/rules.js";
+import {
+  calcCostCheck,
+  calcEstimate,
+  DEFAULTS,
+  PREP_COMPLEXITY,
+} from "./lib/rules.js";
 import { yen, num } from "./lib/format.js";
 
 function Select({ label, value, onChange, options }) {
@@ -66,6 +71,20 @@ function roundFactor(x, dp = 3) {
 
 const STANDARD_SCENARIO_COUNTS = [10, 15, 20, 25, 30];
 
+const COST_ITEM_DEFINITIONS = [
+  { key: "honoraria", label: "講師謝金" },
+  { key: "culture", label: "文化体験費" },
+  { key: "visits", label: "企業・施設訪問費" },
+  { key: "transport", label: "交通費・ガイド費" },
+  { key: "staff", label: "職員・学生スタッフ費" },
+  { key: "venue", label: "会場・間接費" },
+  { key: "other", label: "その他経費" },
+];
+
+function createEmptyCostItems() {
+  return Object.fromEntries(COST_ITEM_DEFINITIONS.map(({ key }) => [key, ""]));
+}
+
 export default function App() {
   const [programName, setProgramName] = useState("");
   const [weeks, setWeeks] = useState(2);
@@ -88,6 +107,7 @@ export default function App() {
   const [useManualMgmtFee] = useState(true);
   const [managementFeePerStudentManual, setManagementFeePerStudentManual] =
     useState("");
+  const [costItems, setCostItems] = useState(createEmptyCostItems);
 
   const input = useMemo(
     () => ({
@@ -121,6 +141,17 @@ export default function App() {
   );
 
   const result = useMemo(() => calcEstimate(input), [input]);
+  const estimatedRevenue = result.ok ? result.totalProgram : null;
+
+  const costCheck = useMemo(
+    () =>
+      calcCostCheck({
+        costItems,
+        participants,
+        estimatedRevenue,
+      }),
+    [costItems, participants, estimatedRevenue]
+  );
 
   const scenarioRows = useMemo(() => {
     const currentParticipants = Number(participants);
@@ -162,6 +193,16 @@ export default function App() {
       lines.push(`管理手数料（1人）: ${result.managementFeePerStudent}`);
       lines.push(`合計（1人あたり）: ${Math.round(result.totalPerStudent)}`);
       lines.push(`全体合計（人数分）: ${Math.round(result.totalProgram)}`);
+      if (costCheck.ok) {
+        lines.push("");
+        lines.push("【原価確認】");
+        lines.push(`原価合計: ${Math.round(costCheck.totalCost)}`);
+        lines.push(
+          `1人あたり原価: ${Math.round(costCheck.costPerParticipant)}`
+        );
+        lines.push(`参考差額: ${Math.round(costCheck.balance)}`);
+        lines.push(`原価率: ${costCheck.costRate.toFixed(1)}%`);
+      }
     } else {
       lines.push("");
       lines.push("※ 入力に不足/未設定があるため、計算できません。");
@@ -182,6 +223,7 @@ export default function App() {
     insurancePerStudent,
     useManualMgmtFee,
     managementFeePerStudentManual,
+    costCheck,
   ]);
 
   const [copyMsg, setCopyMsg] = useState("");
@@ -208,6 +250,11 @@ export default function App() {
     setBaseWeeklyPrice(DEFAULTS.baseWeeklyPrice);
     setInsurancePerStudent(DEFAULTS.insurancePerStudent);
     setManagementFeePerStudentManual("");
+    setCostItems(createEmptyCostItems());
+  }
+
+  function updateCostItem(key, value) {
+    setCostItems((current) => ({ ...current, [key]: value }));
   }
 
   return (
@@ -474,6 +521,82 @@ export default function App() {
             <div className="small">
               ※ 正式な見積を確定する前に、入力金額と係数の妥当性を確認してください。
             </div>
+          </div>
+
+          <div className="col-12">
+            <div className="hr" />
+            <label>原価確認（任意・案件全体）</label>
+            <div className="small">
+              金額だけを入力してください。取引先名、担当者名などは入力しないでください。
+              未入力項目は0円として合計し、全項目が未入力の場合は判定しません。
+            </div>
+            <div className="cost-input-grid">
+              {COST_ITEM_DEFINITIONS.map(({ key, label }) => (
+                <NumberInput
+                  key={key}
+                  label={`${label}（全体）`}
+                  value={costItems[key]}
+                  min={0}
+                  step={1000}
+                  placeholder="金額を入力"
+                  onChange={(value) => updateCostItem(key, value)}
+                />
+              ))}
+            </div>
+
+            {costCheck.status === "empty" && (
+              <div className="cost-empty">
+                原価を1項目以上入力すると、見積総額との比較を表示します。
+              </div>
+            )}
+
+            {!costCheck.ok && costCheck.message && (
+              <div className="warn">{costCheck.message}</div>
+            )}
+
+            {costCheck.ok && (
+              <>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>確認項目</th>
+                      <th>金額・比率</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>見積総額</td>
+                      <td>{yen(Math.round(costCheck.estimatedRevenue))}</td>
+                    </tr>
+                    <tr>
+                      <td>原価合計</td>
+                      <td>{yen(Math.round(costCheck.totalCost))}</td>
+                    </tr>
+                    <tr>
+                      <td>1人あたり原価</td>
+                      <td>{yen(Math.round(costCheck.costPerParticipant))}</td>
+                    </tr>
+                    <tr>
+                      <td>参考差額</td>
+                      <td>{yen(Math.round(costCheck.balance))}</td>
+                    </tr>
+                    <tr>
+                      <td>原価率</td>
+                      <td>{num(costCheck.costRate, 1)}%</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div
+                  className={
+                    costCheck.status === "shortfall" ? "warn" : "good"
+                  }
+                >
+                  {costCheck.status === "shortfall"
+                    ? "原価合計が見積総額を上回っています。入力金額と見積条件を確認してください。"
+                    : "見積総額が入力済みの原価合計を上回っています。"}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="col-12">
