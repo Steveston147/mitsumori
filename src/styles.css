@@ -40,6 +40,21 @@ h1 {
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
 }
 
+.privacy-note {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid #b8d4ee;
+  border-radius: 10px;
+  background: #eef7ff;
+  color: #173a59;
+  font-size: 13px;
+}
+
+.privacy-note strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
