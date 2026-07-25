@@ -9,6 +9,8 @@ import {
 } from "../state/projectHistory.js";
 import "./ProjectWorkspace.css";
 
+const IMPORT_MESSAGE_KEY = "mitsumori.importMessage";
+
 function formatDate(value) {
   if (!value) return "";
   const date = new Date(value);
@@ -23,7 +25,9 @@ function formatDate(value) {
 
 function currentProjectName() {
   try {
-    const info = JSON.parse(window.localStorage.getItem("mitsumori.programBasicInfo") || "{}");
+    const info = JSON.parse(
+      window.localStorage.getItem("mitsumori.programBasicInfo") || "{}"
+    );
     return info.programName || "名称未設定の見積";
   } catch {
     return "名称未設定の見積";
@@ -33,6 +37,9 @@ function currentProjectName() {
 function WorkspacePanel() {
   const [history, setHistory] = useState(() => readProjectHistory());
   const [name, setName] = useState(() => currentProjectName());
+  const [message, setMessage] = useState(
+    () => window.sessionStorage.getItem(IMPORT_MESSAGE_KEY) || ""
+  );
 
   useEffect(() => {
     const refresh = () => {
@@ -43,31 +50,52 @@ function WorkspacePanel() {
       if (!event.target.closest("[data-estimate-excel-export] button")) return;
       window.setTimeout(() => rememberCurrentProject("save"), 0);
     };
+    const showMessage = (event) => {
+      setMessage(event.detail?.message || "");
+    };
 
-    if (window.sessionStorage.getItem("mitsumori.importMessage")) {
+    if (window.sessionStorage.getItem(IMPORT_MESSAGE_KEY)) {
       rememberCurrentProject("import");
+      window.sessionStorage.removeItem(IMPORT_MESSAGE_KEY);
     }
 
     window.addEventListener("mitsumori-project-history-change", refresh);
     window.addEventListener("program-basic-info-change", refresh);
+    window.addEventListener("mitsumori-workspace-message", showMessage);
     document.addEventListener("click", captureSave, true);
+
     return () => {
       window.removeEventListener("mitsumori-project-history-change", refresh);
       window.removeEventListener("program-basic-info-change", refresh);
+      window.removeEventListener("mitsumori-workspace-message", showMessage);
       document.removeEventListener("click", captureSave, true);
     };
   }, []);
 
+  useEffect(() => {
+    if (!message) return undefined;
+    const timer = window.setTimeout(() => setMessage(""), 4000);
+    return () => window.clearTimeout(timer);
+  }, [message]);
+
   const recent = useMemo(() => history.slice(0, 6), [history]);
 
   function newEstimate() {
-    if (!window.confirm("新しい見積を開始します。現在の入力内容は消去されます。保存が必要な場合は先にExcelへ保存してください。")) return;
+    if (
+      !window.confirm(
+        "新しい見積を開始します。現在の入力内容は消去されます。保存が必要な場合は先にExcelへ保存してください。"
+      )
+    ) {
+      return;
+    }
     clearCurrentEstimate();
     window.location.reload();
   }
 
   function openExcel() {
-    document.querySelector("[data-estimate-excel-import] input[type='file']")?.click();
+    document
+      .querySelector("[data-estimate-excel-import] input[type='file']")
+      ?.click();
   }
 
   function saveExcel() {
@@ -75,9 +103,18 @@ function WorkspacePanel() {
   }
 
   function openRecent(entry) {
-    if (!window.confirm(`「${entry.name}」を開きます。現在の入力内容は置き換えられます。続けますか？`)) return;
+    if (
+      !window.confirm(
+        `「${entry.name}」を開きます。現在の入力内容は置き換えられます。続けますか？`
+      )
+    ) {
+      return;
+    }
     restoreProject(entry);
-    window.sessionStorage.setItem("mitsumori.importMessage", `${entry.name}を最近使った案件から復元しました。`);
+    window.sessionStorage.setItem(
+      IMPORT_MESSAGE_KEY,
+      `${entry.name}を最近使った案件から復元しました。`
+    );
     window.location.reload();
   }
 
@@ -89,24 +126,52 @@ function WorkspacePanel() {
           <strong>{name}</strong>
         </div>
         <div className="project-workspace-actions">
-          <button type="button" className="btn secondary" onClick={newEstimate}>新規見積</button>
-          <button type="button" className="btn secondary" onClick={openExcel}>Excelを開く</button>
-          <button type="button" className="btn" onClick={saveExcel}>Excelに保存</button>
+          <button type="button" className="btn secondary" onClick={newEstimate}>
+            新規見積
+          </button>
+          <button type="button" className="btn secondary" onClick={openExcel}>
+            Excelを開く
+          </button>
+          <button type="button" className="btn" onClick={saveExcel}>
+            Excelに保存
+          </button>
         </div>
       </div>
 
+      {message && (
+        <div className="project-workspace-message" role="status">
+          {message}
+        </div>
+      )}
+
       <div className="project-recent-title">最近使った案件</div>
       {recent.length === 0 ? (
-        <div className="project-recent-empty">Excelを保存または読み込むと、ここに最近の案件が表示されます。</div>
+        <div className="project-recent-empty">
+          Excelを保存または読み込むと、ここに最近の案件が表示されます。
+        </div>
       ) : (
         <div className="project-recent-list">
           {recent.map((entry) => (
             <div className="project-recent-item" key={entry.id}>
-              <button type="button" className="project-recent-open" onClick={() => openRecent(entry)}>
+              <button
+                type="button"
+                className="project-recent-open"
+                onClick={() => openRecent(entry)}
+              >
                 <strong>{entry.name}</strong>
-                <span>{formatDate(entry.updatedAt)}・{entry.source === "import" ? "Excel読込" : "Excel保存"}</span>
+                <span>
+                  {formatDate(entry.updatedAt)}・
+                  {entry.source === "import" ? "Excel読込" : "Excel保存"}
+                </span>
               </button>
-              <button type="button" className="project-recent-remove" aria-label={`${entry.name}を履歴から削除`} onClick={() => removeProject(entry.id)}>×</button>
+              <button
+                type="button"
+                className="project-recent-remove"
+                aria-label={`${entry.name}を履歴から削除`}
+                onClick={() => removeProject(entry.id)}
+              >
+                ×
+              </button>
             </div>
           ))}
         </div>
@@ -122,10 +187,12 @@ export default function ProjectWorkspace() {
     const container = document.querySelector(".container");
     const tabs = container?.querySelector(".mode-tabs");
     if (!container || !tabs) return;
+
     const mount = document.createElement("div");
     mount.setAttribute("data-project-workspace", "");
     container.insertBefore(mount, tabs);
     setTarget(mount);
+
     return () => mount.remove();
   }, []);
 
