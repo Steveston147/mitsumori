@@ -37,6 +37,16 @@
   justify-content: flex-end;
 }
 
+.project-workspace-message {
+  margin-top: 12px;
+  padding: 9px 11px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-size: 12px;
+}
+
 .project-recent-title {
   margin-top: 16px;
   padding-top: 14px;
