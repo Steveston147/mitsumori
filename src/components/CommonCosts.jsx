@@ -3,23 +3,98 @@ import { createPortal } from "react-dom";
 import { yen } from "../lib/format.js";
 import { TAX_MODE_OPTIONS } from "../lib/costing.js";
 
+const PROGRAM_INFO_KEY = "mitsumori.programBasicInfo";
+
 const BASIS_OPTIONS = [
   { value: "fixed", label: "案件全体" },
-  { value: "participant", label: "1人あたり" },
+  { value: "participant", label: "人数単位" },
   { value: "day", label: "1日あたり" },
 ];
 
-const INITIAL_VALUES = {
-  participants: "15",
-  days: "1",
-  lines: [
-    { key: "venue", label: "会場・施設使用料", basis: "fixed", unitPrice: "", taxMode: "included" },
-    { key: "staff", label: "職員・運営スタッフ費", basis: "day", unitPrice: "", taxMode: "included" },
-    { key: "materials", label: "教材・印刷・消耗品費", basis: "participant", unitPrice: "", taxMode: "included" },
-    { key: "communication", label: "通信・郵送・事務費", basis: "fixed", unitPrice: "", taxMode: "included" },
-    { key: "other", label: "その他共通経費", basis: "fixed", unitPrice: "", taxMode: "included" },
-  ],
-};
+function createInitialValues(participants = "15") {
+  return {
+    participants,
+    days: "1",
+    lines: [
+      {
+        key: "communication",
+        label: "通信・郵送費",
+        basis: "fixed",
+        unitPrice: "",
+        taxMode: "included",
+      },
+      {
+        key: "other",
+        label: "その他共通経費",
+        basis: "fixed",
+        unitPrice: "",
+        taxMode: "included",
+      },
+      {
+        key: "travelInsurance",
+        label: "訪日保険",
+        basis: "participant",
+        unitPrice: "",
+        quantity: participants,
+        quantityEdited: false,
+        taxMode: "included",
+      },
+      {
+        key: "liabilityInsurance",
+        label: "第三者損害賠償保険",
+        basis: "participant",
+        unitPrice: "",
+        quantity: participants,
+        quantityEdited: false,
+        taxMode: "included",
+      },
+      {
+        key: "certificateFolder",
+        label: "証書フォルダー",
+        basis: "participant",
+        unitPrice: "",
+        quantity: participants,
+        quantityEdited: false,
+        taxMode: "included",
+      },
+      {
+        key: "souvenir",
+        label: "お土産",
+        basis: "participant",
+        unitPrice: "",
+        quantity: participants,
+        quantityEdited: false,
+        taxMode: "included",
+      },
+      {
+        key: "optional1",
+        label: "その他1",
+        editableLabel: true,
+        basis: "fixed",
+        unitPrice: "",
+        taxMode: "included",
+      },
+      {
+        key: "optional2",
+        label: "その他2",
+        editableLabel: true,
+        basis: "fixed",
+        unitPrice: "",
+        taxMode: "included",
+      },
+    ],
+  };
+}
+
+function readStudentCount() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(PROGRAM_INFO_KEY) || "{}");
+    const count = Number(saved.studentCount);
+    return Number.isInteger(count) && count > 0 ? String(count) : "15";
+  } catch {
+    return "15";
+  }
+}
 
 function hasValue(value) {
   return value !== null && value !== undefined && String(value).trim() !== "";
@@ -50,10 +125,18 @@ export function calcCommonCosts({ participants, days, lines }) {
       return { ...line, ok: false, status: "invalid", quantity: 0, subtotal: 0, taxAmount: 0, total: 0 };
     }
 
-    const quantity =
-      line.basis === "fixed" ? 1 : line.basis === "participant" ? participantCount : line.basis === "day" ? dayCount : null;
+    let quantity;
+    if (line.basis === "fixed") {
+      quantity = 1;
+    } else if (line.basis === "day") {
+      quantity = dayCount;
+    } else if (line.basis === "participant") {
+      quantity = hasValue(line.quantity) ? Number(line.quantity) : participantCount;
+    } else {
+      quantity = null;
+    }
 
-    if (quantity === null) {
+    if (!Number.isInteger(quantity) || quantity <= 0) {
       return { ...line, ok: false, status: "invalid", quantity: 0, subtotal: 0, taxAmount: 0, total: 0 };
     }
 
@@ -87,8 +170,29 @@ export function calcCommonCosts({ participants, days, lines }) {
 }
 
 function CommonCostsCalculator() {
-  const [values, setValues] = useState(INITIAL_VALUES);
+  const [values, setValues] = useState(() => createInitialValues(readStudentCount()));
   const result = useMemo(() => calcCommonCosts(values), [values]);
+
+  useEffect(() => {
+    function syncParticipants(event) {
+      const nextCount = String(event?.detail?.studentCount ?? readStudentCount());
+      const count = Number(nextCount);
+      if (!Number.isInteger(count) || count <= 0) return;
+
+      setValues((current) => ({
+        ...current,
+        participants: nextCount,
+        lines: current.lines.map((line) =>
+          line.basis === "participant" && !line.quantityEdited
+            ? { ...line, quantity: nextCount }
+            : line
+        ),
+      }));
+    }
+
+    window.addEventListener("program-basic-info-change", syncParticipants);
+    return () => window.removeEventListener("program-basic-info-change", syncParticipants);
+  }, []);
 
   function update(field, value) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -103,8 +207,19 @@ function CommonCostsCalculator() {
     }));
   }
 
+  function updateQuantity(index, value) {
+    setValues((current) => ({
+      ...current,
+      lines: current.lines.map((line, lineIndex) =>
+        lineIndex === index
+          ? { ...line, quantity: value, quantityEdited: true }
+          : line
+      ),
+    }));
+  }
+
   function reset() {
-    setValues(INITIAL_VALUES);
+    setValues(createInitialValues(readStudentCount()));
   }
 
   return (
@@ -112,7 +227,7 @@ function CommonCostsCalculator() {
       <div className="hr" />
       <label>案件全体の共通経費</label>
       <div className="small">
-        案件全体・1人あたり・1日あたりの計算単位を経費項目ごとに選択できます。
+        人数単位の保険・フォルダー・お土産は、参加留学生人数を初期値として自動入力します。引率者分を含める場合は数量を直接修正できます。
       </div>
 
       <section className="visit-card">
@@ -123,14 +238,8 @@ function CommonCostsCalculator() {
 
         <div className="cost-input-grid">
           <label>
-            参加人数
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={values.participants}
-              onChange={(event) => update("participants", event.target.value)}
-            />
+            参加留学生人数（共通基礎情報から自動反映）
+            <input type="number" value={values.participants} readOnly />
           </label>
           <label>
             実施日数
@@ -159,7 +268,18 @@ function CommonCostsCalculator() {
             <tbody>
               {result.rows.map((row, index) => (
                 <tr key={row.key} className={!row.ok ? "cost-line-invalid" : undefined}>
-                  <td>{row.label}</td>
+                  <td>
+                    {row.editableLabel ? (
+                      <input
+                        value={values.lines[index].label}
+                        placeholder={`${row.key === "optional1" ? "その他1" : "その他2"}（任意）`}
+                        aria-label={`${row.key}の項目名`}
+                        onChange={(event) => updateLine(index, "label", event.target.value)}
+                      />
+                    ) : (
+                      row.label
+                    )}
+                  </td>
                   <td>
                     <select
                       value={values.lines[index].basis}
@@ -182,7 +302,20 @@ function CommonCostsCalculator() {
                       onChange={(event) => updateLine(index, "unitPrice", event.target.value)}
                     />
                   </td>
-                  <td>{row.status === "calculated" ? row.quantity : "-"}</td>
+                  <td>
+                    {values.lines[index].basis === "participant" ? (
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={values.lines[index].quantity ?? values.participants}
+                        aria-label={`${row.label}の数量`}
+                        onChange={(event) => updateQuantity(index, event.target.value)}
+                      />
+                    ) : (
+                      row.status === "calculated" ? row.quantity : values.lines[index].basis === "fixed" ? 1 : values.days
+                    )}
+                  </td>
                   <td>
                     <select
                       value={values.lines[index].taxMode}
@@ -203,7 +336,7 @@ function CommonCostsCalculator() {
 
         {!result.ok && (
           <div className="warn">
-            参加人数と実施日数は1以上の整数、各単価は0円以上で入力してください。
+            実施日数と人数単位の数量は1以上の整数、各単価は0円以上で入力してください。
           </div>
         )}
 
@@ -220,7 +353,7 @@ function CommonCostsCalculator() {
       </section>
 
       <div className="small">
-        ※ 消費税は各行で1円未満を四捨五入します。現時点では他の直接経費との総合計への自動加算は行いません。
+        ※ 消費税は各行で1円未満を四捨五入します。人数を手修正した行は、参加留学生人数が変わっても自動上書きしません。
       </div>
     </div>
   );

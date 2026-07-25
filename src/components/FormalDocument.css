@@ -1,0 +1,437 @@
+.formal-document-panel {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid #dfe3e8;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%);
+  box-shadow: 0 14px 36px rgba(24, 35, 48, 0.08);
+  color: #17202a;
+}
+
+.formal-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e4e8ec;
+}
+
+.formal-panel-heading h2 {
+  margin: 4px 0 8px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.formal-panel-heading p {
+  max-width: 650px;
+  margin: 0;
+  color: #5c6773;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.formal-eyebrow {
+  color: #7b1e2b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.formal-total-preview {
+  min-width: 210px;
+  padding: 16px 18px;
+  border: 1px solid #d6dce2;
+  border-radius: 14px;
+  background: #17202a;
+  color: #fff;
+  text-align: right;
+}
+
+.formal-total-preview span {
+  display: block;
+  margin-bottom: 4px;
+  color: #c9d1d9;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.formal-total-preview strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.formal-document-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.formal-field {
+  min-width: 0;
+}
+
+.formal-field-wide {
+  grid-column: span 2;
+}
+
+.formal-field-full {
+  grid-column: 1 / -1;
+}
+
+.formal-field label {
+  margin-bottom: 7px;
+  color: #47525d;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.formal-field input,
+.formal-field select,
+.formal-field textarea {
+  min-height: 44px;
+  border: 1px solid #cfd6dd;
+  border-radius: 9px;
+  background: #fff;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.formal-field input:focus,
+.formal-field select:focus,
+.formal-field textarea:focus {
+  border-color: #7b1e2b;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(123, 30, 43, 0.11);
+}
+
+.formal-field input[readonly] {
+  background: #f3f5f7;
+  color: #4d5863;
+}
+
+.formal-field textarea {
+  min-height: 130px;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.6;
+}
+
+.formal-program-fee-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px;
+  gap: 10px;
+}
+
+.formal-program-fee-row button {
+  min-height: 44px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.formal-payment-editor {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid #d8dde3;
+  border-radius: 14px;
+  background: #f7f8fa;
+}
+
+.formal-payment-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.formal-payment-title h3 {
+  margin: 4px 0 0;
+  font-size: 17px;
+}
+
+.formal-validation-note {
+  margin-top: 18px;
+  padding: 11px 13px;
+  border-left: 3px solid #b27b00;
+  background: #fff8df;
+  color: #654c00;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.formal-print-button {
+  margin-top: 20px;
+  min-height: 48px;
+  border: none;
+  border-radius: 10px;
+  background: #7b1e2b;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.formal-print-button:hover:not(:disabled) {
+  background: #651722;
+}
+
+.formal-document-sheet {
+  display: none;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #111820;
+}
+
+.formal-letterhead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 235px;
+  gap: 28px;
+  align-items: start;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #7b1e2b;
+}
+
+.formal-letterhead-placeholder {
+  min-height: 82px;
+}
+
+.formal-brand-name {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22pt;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+}
+
+.formal-brand-unit {
+  margin-top: 3px;
+  font-size: 10pt;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.formal-letterhead-note {
+  margin-top: 12px;
+  color: #757575;
+  font-size: 7.5pt;
+}
+
+.formal-document-meta {
+  display: grid;
+  gap: 9px;
+  font-size: 9pt;
+}
+
+.formal-document-meta > div {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.formal-document-meta span {
+  color: #5f6872;
+}
+
+.formal-document-meta strong {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.formal-document-title {
+  margin: 25mm 0 14mm;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24pt;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-align: center;
+}
+
+.formal-recipient {
+  margin-bottom: 13mm;
+  padding: 12px 14px;
+  border-left: 4px solid #7b1e2b;
+  background: #f4f4f4;
+}
+
+.formal-recipient span {
+  display: block;
+  margin-bottom: 4px;
+  color: #666;
+  font-size: 8.5pt;
+  text-transform: uppercase;
+}
+
+.formal-recipient strong {
+  font-size: 12pt;
+}
+
+.formal-program-summary {
+  display: grid;
+  grid-template-columns: 1.5fr 1.4fr 0.7fr;
+  gap: 8px;
+  margin-bottom: 10mm;
+}
+
+.formal-program-summary > div {
+  padding: 9px 10px;
+  border: 1px solid #d3d3d3;
+}
+
+.formal-program-summary span {
+  display: block;
+  margin-bottom: 5px;
+  color: #666;
+  font-size: 7.5pt;
+  text-transform: uppercase;
+}
+
+.formal-program-summary strong {
+  font-size: 9.5pt;
+  line-height: 1.35;
+}
+
+.formal-amount-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10pt;
+}
+
+.formal-amount-table th {
+  padding: 9px 12px;
+  border-top: 1.5px solid #222;
+  border-bottom: 1px solid #222;
+  background: #f0f0f0;
+  font-size: 8.5pt;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.formal-amount-table th:first-child,
+.formal-amount-table td:first-child {
+  text-align: left;
+}
+
+.formal-amount-table th:last-child,
+.formal-amount-table td:last-child {
+  width: 34%;
+  text-align: right;
+}
+
+.formal-amount-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid #d4d4d4;
+}
+
+.formal-grand-total td {
+  padding-top: 13px;
+  padding-bottom: 13px;
+  border-top: 1.5px solid #222;
+  border-bottom: 2px solid #222;
+  font-size: 12pt;
+  font-weight: 700;
+}
+
+.formal-payment-block {
+  margin-top: 12mm;
+  padding: 12px 14px;
+  border: 1px solid #cfcfcf;
+  page-break-inside: avoid;
+}
+
+.formal-payment-block h3 {
+  margin: 0 0 7px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 11pt;
+}
+
+.formal-payment-block p,
+.formal-preline,
+.formal-url {
+  margin: 0;
+  font-size: 8.5pt;
+  line-height: 1.6;
+}
+
+.formal-preline {
+  white-space: pre-line;
+}
+
+.formal-url {
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+  color: #172d55;
+}
+
+.formal-issuer {
+  margin-top: 18mm;
+  padding-top: 8mm;
+  border-top: 1px solid #b8b8b8;
+  font-size: 8.5pt;
+  line-height: 1.55;
+  page-break-inside: avoid;
+}
+
+.formal-issuer-label {
+  margin-bottom: 6px;
+  color: #666;
+  font-size: 7.5pt;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.formal-issuer-email {
+  margin-top: 5px;
+  font-weight: 700;
+}
+
+@media (max-width: 860px) {
+  .formal-panel-heading,
+  .formal-payment-title {
+    display: grid;
+  }
+
+  .formal-total-preview {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .formal-document-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .formal-field-wide,
+  .formal-field-full {
+    grid-column: auto;
+  }
+
+  .formal-program-fee-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  body.formal-document-printing .print-summary {
+    display: none !important;
+  }
+
+  body.formal-document-printing .formal-document-sheet {
+    display: block !important;
+  }
+
+  body.formal-document-printing .container > :not([data-formal-document-mount]) {
+    display: none !important;
+  }
+
+  body.formal-document-printing [data-formal-document-mount] > :not(.formal-document-sheet) {
+    display: none !important;
+  }
+
+  body.formal-document-printing .formal-document-sheet {
+    font-size: 10pt;
+  }
+}
