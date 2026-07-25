@@ -24,40 +24,46 @@ export function rememberProject(payload, source = "save") {
   if (!payload?.storage || typeof payload.storage !== "object") return;
   const name = projectName(payload);
   const now = new Date().toISOString();
-  const id = `${name}::${payload.exportedAt || now}`;
   const entry = {
-    id,
+    id: `${name}::${now}`,
     name,
     source,
     updatedAt: now,
     exportedAt: payload.exportedAt || now,
     storage: payload.storage,
   };
-  const next = [
-    entry,
-    ...readProjectHistory().filter((item) => item.name !== name),
-  ].slice(0, MAX_PROJECTS);
+  const next = [entry, ...readProjectHistory().filter((item) => item.name !== name)].slice(0, MAX_PROJECTS);
   window.localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
   window.dispatchEvent(new CustomEvent("mitsumori-project-history-change"));
 }
 
+export function rememberCurrentProject(source = "save") {
+  const storage = {};
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const key = window.localStorage.key(index);
+    if (!key?.startsWith("mitsumori.") || key === HISTORY_KEY) continue;
+    const raw = window.localStorage.getItem(key);
+    storage[key] = readJson(raw, raw);
+  }
+  rememberProject({
+    exportedAt: new Date().toISOString(),
+    programBasicInfo: storage["mitsumori.programBasicInfo"] || {},
+    storage,
+  }, source);
+}
+
 export function restoreProject(entry) {
   Object.entries(entry?.storage || {}).forEach(([key, value]) => {
-    if (!key.startsWith("mitsumori.")) return;
-    if (key === HISTORY_KEY) return;
-    window.localStorage.setItem(
-      key,
-      typeof value === "string" ? value : JSON.stringify(value)
-    );
+    if (!key.startsWith("mitsumori.") || key === HISTORY_KEY) return;
+    window.localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
   });
 }
 
 export function clearCurrentEstimate() {
-  const keep = new Set([HISTORY_KEY]);
   const remove = [];
   for (let index = 0; index < window.localStorage.length; index += 1) {
     const key = window.localStorage.key(index);
-    if (key?.startsWith("mitsumori.") && !keep.has(key)) remove.push(key);
+    if (key?.startsWith("mitsumori.") && key !== HISTORY_KEY) remove.push(key);
   }
   remove.forEach((key) => window.localStorage.removeItem(key));
 }
