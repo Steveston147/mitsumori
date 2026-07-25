@@ -1,0 +1,144 @@
+.project-workspace {
+  margin: 0 0 18px;
+  padding: 18px;
+  border: 1px solid #d6dde6;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.project-workspace-heading {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.project-workspace-heading span,
+.project-workspace-heading strong {
+  display: block;
+}
+
+.project-workspace-heading span {
+  margin-bottom: 4px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.project-workspace-heading strong {
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.project-workspace-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.project-workspace-message {
+  margin-top: 12px;
+  padding: 9px 11px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-size: 12px;
+}
+
+.project-recent-title {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.project-recent-empty {
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.project-recent-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.project-recent-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 30px;
+  overflow: hidden;
+  border: 1px solid #dbe3ec;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.project-recent-open,
+.project-recent-remove {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.project-recent-open {
+  min-width: 0;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.project-recent-open strong,
+.project-recent-open span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-recent-open strong {
+  color: #1e293b;
+  font-size: 13px;
+}
+
+.project-recent-open span {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.project-recent-open:hover {
+  background: #eef4fa;
+}
+
+.project-recent-remove {
+  color: #94a3b8;
+  font-size: 18px;
+}
+
+.project-recent-remove:hover {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+@media (max-width: 850px) {
+  .project-workspace-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .project-workspace-actions {
+    justify-content: stretch;
+  }
+
+  .project-workspace-actions .btn {
+    flex: 1;
+  }
+
+  .project-recent-list {
+    grid-template-columns: 1fr;
+  }
+}
