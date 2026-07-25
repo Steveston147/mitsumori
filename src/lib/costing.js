@@ -28,7 +28,7 @@ export function calcCostLine({ unitPrice, quantity, taxMode }) {
   if (
     !Number.isFinite(price) ||
     price < 0 ||
-    !Number.isFinite(count) ||
+    !Number.isInteger(count) ||
     count <= 0
   ) {
     return {
