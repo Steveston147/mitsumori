@@ -14,9 +14,9 @@ function readLastSaved() {
 }
 
 function formatSavedTime(value) {
-  if (!value) return "まだExcel保存されていません";
+  if (!value) return "まだExcelファイルを出力していません";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "保存時刻を確認できません";
+  if (Number.isNaN(date.getTime())) return "出力時刻を確認できません";
   return new Intl.DateTimeFormat("ja-JP", {
     month: "numeric",
     day: "numeric",
@@ -25,7 +25,7 @@ function formatSavedTime(value) {
   }).format(date);
 }
 
-function triggerExcelSave() {
+function triggerExcelOutput() {
   document.querySelector("[data-estimate-excel-export] button")?.click();
 }
 
@@ -47,12 +47,20 @@ function SaveStatePanel({ compact = false }) {
       <div className="build-up-save-state-copy">
         <span className="build-up-save-state-icon" aria-hidden="true">{dirty ? "!" : "✓"}</span>
         <div>
-          <strong>{dirty ? "ブラウザには反映済み・Excelには未保存" : "Excel保存後の変更はありません"}</strong>
-          <span>{dirty ? "このまま編集を続けられます。区切りのよいところでExcelに保存してください。" : `最終Excel保存：${formatSavedTime(lastSaved)}`}</span>
+          <strong>
+            {dirty
+              ? "この内容はまだExcelファイルとして出力されていません"
+              : "この内容は最新のExcel出力と一致しています"}
+          </strong>
+          <span>
+            {dirty
+              ? "入力内容はブラウザ内に自動反映されています。必要な時点でExcelを出力してください。"
+              : `最終Excel出力：${formatSavedTime(lastSaved)}`}
+          </span>
         </div>
       </div>
-      <button type="button" className="build-up-save-now" onClick={triggerExcelSave}>
-        Excelに保存
+      <button type="button" className="build-up-save-now" onClick={triggerExcelOutput}>
+        Excelを出力
       </button>
     </section>
   );
@@ -67,6 +75,14 @@ export default function BuildUpSaveStatus() {
       setFooterTarget(document.querySelector("[data-build-up-workspace-footer-mount]"));
       const dashboard = document.querySelector("[data-build-up-active-view='dashboard'] [data-build-up-workspace]");
       setDashboardTarget(dashboard || null);
+
+      const exportButton = document.querySelector("[data-estimate-excel-export] button");
+      if (exportButton) exportButton.textContent = "Excelを出力";
+
+      const exportDescription = document.querySelector("[data-estimate-excel-export] p");
+      if (exportDescription) {
+        exportDescription.textContent = "共通情報、入力値、計算表、再利用用データをExcelファイルとして出力します。";
+      }
     };
 
     const markDirty = (event) => {
@@ -75,11 +91,11 @@ export default function BuildUpSaveStatus() {
       window.dispatchEvent(new CustomEvent("mitsumori-build-up-save-state"));
     };
 
-    const markSaved = (event) => {
+    const markOutput = (event) => {
       if (!event.target.closest("[data-estimate-excel-export] button")) return;
-      const savedAt = new Date().toISOString();
+      const outputAt = new Date().toISOString();
       window.sessionStorage.setItem(DIRTY_KEY, "false");
-      window.sessionStorage.setItem(LAST_SAVED_KEY, savedAt);
+      window.sessionStorage.setItem(LAST_SAVED_KEY, outputAt);
       window.setTimeout(() => {
         window.dispatchEvent(new CustomEvent("mitsumori-build-up-save-state"));
       }, 0);
@@ -94,14 +110,14 @@ export default function BuildUpSaveStatus() {
     });
     document.addEventListener("input", markDirty, true);
     document.addEventListener("change", markDirty, true);
-    document.addEventListener("click", markSaved, true);
+    document.addEventListener("click", markOutput, true);
     syncTargets();
 
     return () => {
       observer.disconnect();
       document.removeEventListener("input", markDirty, true);
       document.removeEventListener("change", markDirty, true);
-      document.removeEventListener("click", markSaved, true);
+      document.removeEventListener("click", markOutput, true);
     };
   }, []);
 
