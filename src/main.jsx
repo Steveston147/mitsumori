@@ -8,6 +8,7 @@ import CommonCosts from "./components/CommonCosts.jsx";
 import BuildUpSummary from "./components/BuildUpSummary.jsx";
 import FormalDocument from "./components/FormalDocument.jsx";
 import "./styles.css";
+import "./components/FormalDocument.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
