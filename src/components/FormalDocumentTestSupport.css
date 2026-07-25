@@ -1,0 +1,244 @@
+.formal-test-panel {
+  margin: 18px 0 0;
+  padding: 18px;
+  border: 1px solid #d9dde5;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 8px 24px rgba(25, 38, 56, 0.06);
+}
+
+.formal-test-heading {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(280px, 1.2fr);
+  align-items: start;
+  gap: 20px;
+}
+
+.formal-test-heading h3 {
+  margin: 8px 0 0;
+  font-size: 17px;
+  letter-spacing: 0.01em;
+}
+
+.formal-test-heading p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.formal-test-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border: 1px solid #d7a63b;
+  border-radius: 999px;
+  background: #fff8e6;
+  color: #7a5200;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.formal-test-status-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.formal-test-status-grid > div {
+  padding: 12px;
+  border: 1px solid #e3e7ed;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.formal-test-status-grid span,
+.formal-test-status-grid strong {
+  display: block;
+}
+
+.formal-test-status-grid span {
+  margin-bottom: 4px;
+  color: #6b7280;
+  font-size: 11px;
+}
+
+.formal-test-status-grid strong {
+  font-size: 13px;
+}
+
+.formal-test-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.formal-test-actions .btn {
+  min-height: 42px;
+  font-weight: 700;
+}
+
+.formal-test-message,
+.formal-test-warning {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.formal-test-message {
+  border: 1px solid #b8d4ee;
+  background: #eef7ff;
+  color: #173a59;
+}
+
+.formal-test-warning {
+  border: 1px solid #f0d68a;
+  background: #fff8df;
+  color: #654b00;
+}
+
+@media (max-width: 860px) {
+  .formal-test-heading,
+  .formal-test-status-grid,
+  .formal-test-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 9mm 11mm;
+  }
+
+  html,
+  body.formal-document-printing {
+    width: 210mm;
+    height: 297mm;
+    overflow: hidden !important;
+  }
+
+  body.formal-document-printing .formal-document-sheet {
+    position: relative;
+    width: 188mm;
+    height: 279mm;
+    max-height: 279mm;
+    margin: 0 auto;
+    overflow: hidden;
+    break-after: avoid-page;
+    page-break-after: avoid;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+    font-size: 8.7pt !important;
+    line-height: 1.3;
+  }
+
+  body.formal-document-printing .formal-letterhead {
+    margin-bottom: 5mm;
+    padding-bottom: 4mm;
+  }
+
+  body.formal-document-printing .formal-document-title {
+    margin: 4mm 0 5mm;
+    font-size: 18pt;
+  }
+
+  body.formal-document-printing .formal-recipient {
+    margin-bottom: 5mm;
+    padding: 8px 10px;
+  }
+
+  body.formal-document-printing .formal-program-summary {
+    gap: 5px;
+    margin-bottom: 5mm;
+  }
+
+  body.formal-document-printing .formal-program-summary > div {
+    padding: 6px 7px;
+  }
+
+  body.formal-document-printing .formal-amount-table th {
+    padding: 6px 9px;
+  }
+
+  body.formal-document-printing .formal-amount-table td {
+    padding: 7px 9px;
+  }
+
+  body.formal-document-printing .formal-grand-total td {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  body.formal-document-printing .formal-payment-block,
+  body.formal-document-printing .formal-issuer {
+    margin-top: 0;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    display: inline-block;
+    width: 48.5%;
+    vertical-align: top;
+  }
+
+  body.formal-document-printing .formal-payment-block {
+    margin-right: 2%;
+    padding: 8px 10px;
+  }
+
+  body.formal-document-printing .formal-payment-block h3 {
+    margin-bottom: 4px;
+    font-size: 9.5pt;
+  }
+
+  body.formal-document-printing .formal-payment-block p,
+  body.formal-document-printing .formal-preline,
+  body.formal-document-printing .formal-url {
+    font-size: 7.4pt;
+    line-height: 1.35;
+  }
+
+  body.formal-document-printing .formal-url {
+    overflow-wrap: anywhere;
+    word-break: break-all;
+  }
+
+  body.formal-document-printing .formal-issuer {
+    padding-top: 0;
+    border-top: 0;
+    font-size: 7.4pt;
+    line-height: 1.35;
+  }
+
+  body.formal-document-printing .formal-issuer-label,
+  body.formal-document-printing .formal-issuer-email {
+    margin-top: 2px;
+    margin-bottom: 3px;
+  }
+
+  body.formal-document-printing .formal-document-sheet::before {
+    content: "TEST VERSION — OFFICIAL LETTERHEAD AND PAYMENT INFORMATION PENDING";
+    position: fixed;
+    inset: 46% auto auto 50%;
+    z-index: 20;
+    width: 150mm;
+    transform: translate(-50%, -50%) rotate(-28deg);
+    color: rgba(130, 30, 30, 0.12);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 25pt;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  body.formal-document-printing .formal-letterhead-note {
+    display: block !important;
+    color: #7a1f1f !important;
+    font-weight: 700;
+  }
+}

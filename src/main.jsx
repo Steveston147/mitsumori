@@ -7,8 +7,14 @@ import StudentCollaborationCosts from "./components/StudentCollaborationCosts.js
 import CommonCosts from "./components/CommonCosts.jsx";
 import BuildUpSummary from "./components/BuildUpSummary.jsx";
 import FormalDocument from "./components/FormalDocument.jsx";
+import FormalDocumentTestSupport from "./components/FormalDocumentTestSupport.jsx";
+import ProfessionalDocumentPrint from "./components/ProfessionalDocumentPrint.jsx";
 import "./styles.css";
 import "./components/FormalDocument.css";
+import "./components/FormalDocumentTestSupport.css";
+import "./components/FormalDocumentInvoiceEnhancements.css";
+import "./components/FormalDocumentGoalScale.css";
+import "./components/ProfessionalDocumentPrint.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -19,5 +25,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <CommonCosts />
     <BuildUpSummary />
     <FormalDocument />
+    <FormalDocumentTestSupport />
+    <ProfessionalDocumentPrint />
   </React.StrictMode>
 );
