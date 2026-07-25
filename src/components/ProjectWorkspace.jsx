@@ -46,7 +46,7 @@ function WorkspacePanel() {
       setHistory(readProjectHistory());
       setName(currentProjectName());
     };
-    const captureSave = (event) => {
+    const captureOutput = (event) => {
       if (!event.target.closest("[data-estimate-excel-export] button")) return;
       window.setTimeout(() => rememberCurrentProject("save"), 0);
     };
@@ -62,13 +62,13 @@ function WorkspacePanel() {
     window.addEventListener("mitsumori-project-history-change", refresh);
     window.addEventListener("program-basic-info-change", refresh);
     window.addEventListener("mitsumori-workspace-message", showMessage);
-    document.addEventListener("click", captureSave, true);
+    document.addEventListener("click", captureOutput, true);
 
     return () => {
       window.removeEventListener("mitsumori-project-history-change", refresh);
       window.removeEventListener("program-basic-info-change", refresh);
       window.removeEventListener("mitsumori-workspace-message", showMessage);
-      document.removeEventListener("click", captureSave, true);
+      document.removeEventListener("click", captureOutput, true);
     };
   }, []);
 
@@ -83,7 +83,7 @@ function WorkspacePanel() {
   function newEstimate() {
     if (
       !window.confirm(
-        "新しい見積を開始します。現在の入力内容は消去されます。保存が必要な場合は先にExcelへ保存してください。"
+        "新しい見積を開始します。現在の入力内容は消去されます。必要な場合は先にExcelを出力してください。"
       )
     ) {
       return;
@@ -98,7 +98,7 @@ function WorkspacePanel() {
       ?.click();
   }
 
-  function saveExcel() {
+  function outputExcel() {
     document.querySelector("[data-estimate-excel-export] button")?.click();
   }
 
@@ -127,13 +127,13 @@ function WorkspacePanel() {
         </div>
         <div className="project-workspace-actions">
           <button type="button" className="btn secondary" onClick={newEstimate}>
-            新規見積
+            新しい見積を作成
           </button>
           <button type="button" className="btn secondary" onClick={openExcel}>
-            Excelを開く
+            見積ファイルを開く
           </button>
-          <button type="button" className="btn" onClick={saveExcel}>
-            Excelに保存
+          <button type="button" className="btn" onClick={outputExcel}>
+            Excelを出力
           </button>
         </div>
       </div>
@@ -147,7 +147,7 @@ function WorkspacePanel() {
       <div className="project-recent-title">最近使った案件</div>
       {recent.length === 0 ? (
         <div className="project-recent-empty">
-          Excelを保存または読み込むと、ここに最近の案件が表示されます。
+          Excelを出力または読み込むと、ここに最近の案件が表示されます。
         </div>
       ) : (
         <div className="project-recent-list">
@@ -161,7 +161,7 @@ function WorkspacePanel() {
                 <strong>{entry.name}</strong>
                 <span>
                   {formatDate(entry.updatedAt)}・
-                  {entry.source === "import" ? "Excel読込" : "Excel保存"}
+                  {entry.source === "import" ? "Excel読込" : "Excel出力"}
                 </span>
               </button>
               <button
