@@ -9,11 +9,11 @@ function readDirty() {
   return window.sessionStorage.getItem(DIRTY_KEY) === "true";
 }
 
-function readLastSaved() {
+function readLastOutput() {
   return window.sessionStorage.getItem(LAST_SAVED_KEY) || "";
 }
 
-function formatSavedTime(value) {
+function formatOutputTime(value) {
   if (!value) return "まだExcelファイルを出力していません";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "出力時刻を確認できません";
@@ -29,23 +29,22 @@ function triggerExcelOutput() {
   document.querySelector("[data-estimate-excel-export] button")?.click();
 }
 
-function SaveStatePanel({ compact = false }) {
-  const [dirty, setDirty] = useState(() => readDirty());
-  const [lastSaved, setLastSaved] = useState(() => readLastSaved());
+function findBuildUpRoot() {
+  return [...document.querySelectorAll("h2.mode-title")]
+    .find((heading) => heading.textContent.trim() === "積み上げ方式")
+    ?.parentElement ?? null;
+}
 
-  useEffect(() => {
-    const refresh = () => {
-      setDirty(readDirty());
-      setLastSaved(readLastSaved());
-    };
-    window.addEventListener("mitsumori-build-up-save-state", refresh);
-    return () => window.removeEventListener("mitsumori-build-up-save-state", refresh);
-  }, []);
-
+function SaveStatePanel({ dirty, lastOutput }) {
   return (
-    <section className={`build-up-save-state ${dirty ? "is-dirty" : "is-saved"} ${compact ? "is-compact" : ""}`}>
+    <section
+      className={`build-up-save-state ${dirty ? "is-dirty" : "is-saved"}`}
+      data-build-up-save-status
+    >
       <div className="build-up-save-state-copy">
-        <span className="build-up-save-state-icon" aria-hidden="true">{dirty ? "!" : "✓"}</span>
+        <span className="build-up-save-state-icon" aria-hidden="true">
+          {dirty ? "!" : "✓"}
+        </span>
         <div>
           <strong>
             {dirty
@@ -55,7 +54,7 @@ function SaveStatePanel({ compact = false }) {
           <span>
             {dirty
               ? "入力内容はブラウザ内に自動反映されています。必要な時点でExcelを出力してください。"
-              : `最終Excel出力：${formatSavedTime(lastSaved)}`}
+              : `最終Excel出力：${formatOutputTime(lastOutput)}`}
           </span>
         </div>
       </div>
@@ -67,67 +66,99 @@ function SaveStatePanel({ compact = false }) {
 }
 
 export default function BuildUpSaveStatus() {
-  const [footerTarget, setFooterTarget] = useState(null);
-  const [dashboardTarget, setDashboardTarget] = useState(null);
+  const [target, setTarget] = useState(null);
+  const [buildUpRoot, setBuildUpRoot] = useState(null);
+  const [visible, setVisible] = useState(false);
+  const [dirty, setDirty] = useState(() => readDirty());
+  const [lastOutput, setLastOutput] = useState(() => readLastOutput());
 
   useEffect(() => {
-    const syncTargets = () => {
-      setFooterTarget(document.querySelector("[data-build-up-workspace-footer-mount]"));
-      const dashboard = document.querySelector("[data-build-up-active-view='dashboard'] [data-build-up-workspace]");
-      setDashboardTarget(dashboard || null);
+    let cancelled = false;
+    let frameId = 0;
+
+    const mountOutsideWorkspace = () => {
+      const root = findBuildUpRoot();
+      if (!root) {
+        frameId = window.requestAnimationFrame(mountOutsideWorkspace);
+        return;
+      }
+
+      const mount = document.createElement("div");
+      mount.dataset.buildUpSaveStatusMount = "";
+      root.insertAdjacentElement("afterend", mount);
+
+      if (cancelled) {
+        mount.remove();
+        return;
+      }
 
       const exportButton = document.querySelector("[data-estimate-excel-export] button");
       if (exportButton) exportButton.textContent = "Excelを出力";
 
       const exportDescription = document.querySelector("[data-estimate-excel-export] p");
       if (exportDescription) {
-        exportDescription.textContent = "共通情報、入力値、計算表、再利用用データをExcelファイルとして出力します。";
+        exportDescription.textContent =
+          "共通情報、入力値、計算表、再利用用データをExcelファイルとして出力します。";
       }
 
-      const completeButton = document.querySelector(".build-up-complete");
-      if (completeButton) completeButton.textContent = "一覧に戻る（入力内容を反映）";
+      setBuildUpRoot(root);
+      setTarget(mount);
+      setVisible(!root.hidden);
     };
 
+    mountOutsideWorkspace();
+
+    return () => {
+      cancelled = true;
+      if (frameId) window.cancelAnimationFrame(frameId);
+      document.querySelector("[data-build-up-save-status-mount]")?.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!buildUpRoot) return undefined;
+
+    const refreshVisibility = () => setVisible(!buildUpRoot.hidden);
+
     const markDirty = (event) => {
-      if (!event.target.closest("[data-build-up-active-view]")) return;
+      if (!(event.target instanceof Element) || !buildUpRoot.contains(event.target)) return;
       window.sessionStorage.setItem(DIRTY_KEY, "true");
-      window.dispatchEvent(new CustomEvent("mitsumori-build-up-save-state"));
+      setDirty(true);
     };
 
     const markOutput = (event) => {
+      if (!(event.target instanceof Element)) return;
       if (!event.target.closest("[data-estimate-excel-export] button")) return;
       const outputAt = new Date().toISOString();
       window.sessionStorage.setItem(DIRTY_KEY, "false");
       window.sessionStorage.setItem(LAST_SAVED_KEY, outputAt);
-      window.setTimeout(() => {
-        window.dispatchEvent(new CustomEvent("mitsumori-build-up-save-state"));
-      }, 0);
+      setDirty(false);
+      setLastOutput(outputAt);
     };
 
-    const observer = new MutationObserver(syncTargets);
-    observer.observe(document.body, {
-      subtree: true,
-      childList: true,
+    const visibilityObserver = new MutationObserver(refreshVisibility);
+    visibilityObserver.observe(buildUpRoot, {
       attributes: true,
-      attributeFilter: ["data-build-up-active-view"],
+      attributeFilter: ["hidden"],
     });
-    document.addEventListener("input", markDirty, true);
-    document.addEventListener("change", markDirty, true);
+
+    buildUpRoot.addEventListener("input", markDirty, true);
+    buildUpRoot.addEventListener("change", markDirty, true);
     document.addEventListener("click", markOutput, true);
-    syncTargets();
+    refreshVisibility();
 
     return () => {
-      observer.disconnect();
-      document.removeEventListener("input", markDirty, true);
-      document.removeEventListener("change", markDirty, true);
+      visibilityObserver.disconnect();
+      buildUpRoot.removeEventListener("input", markDirty, true);
+      buildUpRoot.removeEventListener("change", markDirty, true);
       document.removeEventListener("click", markOutput, true);
     };
-  }, []);
+  }, [buildUpRoot]);
 
-  return (
-    <>
-      {footerTarget ? createPortal(<SaveStatePanel compact />, footerTarget) : null}
-      {dashboardTarget ? createPortal(<SaveStatePanel />, dashboardTarget) : null}
-    </>
+  if (!target || !visible) return null;
+
+  return createPortal(
+    <SaveStatePanel dirty={dirty} lastOutput={lastOutput} />,
+    target
   );
 }
