@@ -14,9 +14,9 @@ function readLastOutput() {
 }
 
 function formatOutputTime(value) {
-  if (!value) return "まだExcelファイルを出力していません";
+  if (!value) return "未出力";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "出力時刻を確認できません";
+  if (Number.isNaN(date.getTime())) return "時刻不明";
   return new Intl.DateTimeFormat("ja-JP", {
     month: "numeric",
     day: "numeric",
@@ -35,6 +35,22 @@ function findBuildUpRoot() {
     ?.parentElement ?? null;
 }
 
+function applyExcelWording() {
+  const exportPanel = document.querySelector("[data-estimate-excel-export]");
+  const exportTitle = exportPanel?.querySelector("strong");
+  const exportDescription = exportPanel?.querySelector("p");
+  const exportButton = exportPanel?.querySelector("button");
+
+  if (!exportPanel || !exportTitle || !exportDescription || !exportButton) {
+    return false;
+  }
+
+  exportTitle.textContent = "Excelファイル";
+  exportDescription.textContent = "見積データをExcel（.xlsx）で出力します。";
+  exportButton.textContent = "Excel出力";
+  return true;
+}
+
 function SaveStatePanel({ dirty, lastOutput }) {
   return (
     <section
@@ -46,20 +62,16 @@ function SaveStatePanel({ dirty, lastOutput }) {
           {dirty ? "!" : "✓"}
         </span>
         <div>
-          <strong>
-            {dirty
-              ? "この内容はまだExcelファイルとして出力されていません"
-              : "この内容は最新のExcel出力と一致しています"}
-          </strong>
+          <strong>{dirty ? "Excel未出力" : "Excel出力済み"}</strong>
           <span>
             {dirty
-              ? "入力内容はブラウザ内に自動反映されています。必要な時点でExcelを出力してください。"
-              : `最終Excel出力：${formatOutputTime(lastOutput)}`}
+              ? "入力内容は自動反映されています。必要な時点で出力してください。"
+              : `最終出力：${formatOutputTime(lastOutput)}`}
           </span>
         </div>
       </div>
       <button type="button" className="build-up-save-now" onClick={triggerExcelOutput}>
-        Excelを出力
+        Excel出力
       </button>
     </section>
   );
@@ -75,6 +87,15 @@ export default function BuildUpSaveStatus() {
   useEffect(() => {
     let cancelled = false;
     let frameId = 0;
+    let wordingAttempts = 0;
+
+    const applyWordingWhenReady = () => {
+      if (cancelled || applyExcelWording()) return;
+      wordingAttempts += 1;
+      if (wordingAttempts < 120) {
+        frameId = window.requestAnimationFrame(applyWordingWhenReady);
+      }
+    };
 
     const mountOutsideWorkspace = () => {
       const root = findBuildUpRoot();
@@ -92,15 +113,7 @@ export default function BuildUpSaveStatus() {
         return;
       }
 
-      const exportButton = document.querySelector("[data-estimate-excel-export] button");
-      if (exportButton) exportButton.textContent = "Excelを出力";
-
-      const exportDescription = document.querySelector("[data-estimate-excel-export] p");
-      if (exportDescription) {
-        exportDescription.textContent =
-          "共通情報、入力値、計算表、再利用用データをExcelファイルとして出力します。";
-      }
-
+      applyWordingWhenReady();
       setBuildUpRoot(root);
       setTarget(mount);
       setVisible(!root.hidden);

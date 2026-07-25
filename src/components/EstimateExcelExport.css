@@ -55,3 +55,12 @@
     width: 100%;
   }
 }
+
+/*
+ * The visible Excel action lives in ProjectWorkspace.
+ * Keep this component mounted only as the shared export engine so existing
+ * callers can trigger the same download without showing a duplicate panel.
+ */
+[data-estimate-excel-export] .estimate-export-panel {
+  display: none !important;
+}
