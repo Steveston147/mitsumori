@@ -35,6 +35,22 @@ function findBuildUpRoot() {
     ?.parentElement ?? null;
 }
 
+function applyExcelWording() {
+  const exportPanel = document.querySelector("[data-estimate-excel-export]");
+  const exportTitle = exportPanel?.querySelector("strong");
+  const exportDescription = exportPanel?.querySelector("p");
+  const exportButton = exportPanel?.querySelector("button");
+
+  if (!exportPanel || !exportTitle || !exportDescription || !exportButton) {
+    return false;
+  }
+
+  exportTitle.textContent = "Excelファイル";
+  exportDescription.textContent = "見積データをExcel（.xlsx）で出力します。";
+  exportButton.textContent = "Excel出力";
+  return true;
+}
+
 function SaveStatePanel({ dirty, lastOutput }) {
   return (
     <section
@@ -71,6 +87,15 @@ export default function BuildUpSaveStatus() {
   useEffect(() => {
     let cancelled = false;
     let frameId = 0;
+    let wordingAttempts = 0;
+
+    const applyWordingWhenReady = () => {
+      if (cancelled || applyExcelWording()) return;
+      wordingAttempts += 1;
+      if (wordingAttempts < 120) {
+        frameId = window.requestAnimationFrame(applyWordingWhenReady);
+      }
+    };
 
     const mountOutsideWorkspace = () => {
       const root = findBuildUpRoot();
@@ -88,17 +113,7 @@ export default function BuildUpSaveStatus() {
         return;
       }
 
-      const exportPanel = document.querySelector("[data-estimate-excel-export]");
-      const exportTitle = exportPanel?.querySelector("strong");
-      const exportDescription = exportPanel?.querySelector("p");
-      const exportButton = exportPanel?.querySelector("button");
-
-      if (exportTitle) exportTitle.textContent = "Excelファイル";
-      if (exportDescription) {
-        exportDescription.textContent = "見積データをExcel（.xlsx）で出力します。";
-      }
-      if (exportButton) exportButton.textContent = "Excel出力";
-
+      applyWordingWhenReady();
       setBuildUpRoot(root);
       setTarget(mount);
       setVisible(!root.hidden);
