@@ -40,7 +40,7 @@ function getScope(control) {
   if (modeTitle) return `方式:${modeTitle}`;
 
   const sectionLabel = control.closest(".col-12")?.querySelector(":scope > label")?.textContent
-    .replace(/\s+/g, " ")
+    ?.replace(/\s+/g, " ")
     .trim();
   if (sectionLabel) return `区分:${sectionLabel}`;
 
@@ -77,6 +77,8 @@ function collectSnapshot() {
 }
 
 function setNativeValue(control, value) {
+  if (!control) return false;
+
   const nextValue = value == null ? "" : String(value);
   const property = control.type === "checkbox" ? "checked" : "value";
   const prototype = Object.getPrototypeOf(control);
@@ -90,6 +92,7 @@ function setNativeValue(control, value) {
 
   control.dispatchEvent(new Event("input", { bubbles: true }));
   control.dispatchEvent(new Event("change", { bubbles: true }));
+  return true;
 }
 
 function buildControlMap() {
@@ -109,12 +112,14 @@ function buildControlMap() {
 }
 
 function applySnapshot(snapshot, generatorsOnly = false) {
+  if (!Array.isArray(snapshot)) return;
   const map = buildControlMap();
 
   snapshot.forEach((item) => {
+    if (!item || typeof item !== "object") return;
     const isGenerator = GENERATOR_LABELS.has(item.label);
     if (generatorsOnly !== isGenerator) return;
-    const key = `${item.scope}::${item.label}::${item.occurrence || 0}`;
+    const key = `${item.scope || "見積入力"}::${item.label || ""}::${item.occurrence || 0}`;
     setNativeValue(map.get(key), item.value);
   });
 }
@@ -124,17 +129,23 @@ function readSnapshot() {
     const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "null");
     return Array.isArray(parsed) ? parsed : [];
   } catch {
+    window.localStorage.removeItem(STORAGE_KEY);
     return [];
   }
 }
 
 function saveSnapshot() {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(collectSnapshot()));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(collectSnapshot()));
+  } catch (error) {
+    console.error("Failed to save estimate form snapshot", error);
+  }
 }
 
 export default function FormStatePersistence() {
   const restoringRef = useRef(false);
   const timerRef = useRef(null);
+  const restoreTimersRef = useRef([]);
 
   useEffect(() => {
     const snapshot = readSnapshot();
@@ -143,14 +154,19 @@ export default function FormStatePersistence() {
       restoringRef.current = true;
       applySnapshot(snapshot, true);
       RESTORE_DELAYS.forEach((delay, index) => {
-        window.setTimeout(() => {
-          applySnapshot(snapshot, false);
+        const timer = window.setTimeout(() => {
+          try {
+            applySnapshot(snapshot, false);
+          } catch (error) {
+            console.error("Failed to restore estimate form snapshot", error);
+          }
           if (index === RESTORE_DELAYS.length - 1) {
             restoringRef.current = false;
             saveSnapshot();
             window.dispatchEvent(new CustomEvent("estimate-form-snapshot-restored"));
           }
         }, delay);
+        restoreTimersRef.current.push(timer);
       });
     }
 
@@ -173,6 +189,7 @@ export default function FormStatePersistence() {
 
     return () => {
       window.clearTimeout(timerRef.current);
+      restoreTimersRef.current.forEach((timer) => window.clearTimeout(timer));
       document.removeEventListener("input", scheduleSave, true);
       document.removeEventListener("change", scheduleSave, true);
     };
