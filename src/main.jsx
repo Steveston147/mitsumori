@@ -4,6 +4,7 @@ import App from "./App.jsx";
 import JapaneseCourseCosts from "./components/JapaneseCourseCosts.jsx";
 import StudentCollaborationCosts from "./components/StudentCollaborationCosts.jsx";
 import CommonCosts from "./components/CommonCosts.jsx";
+import BuildUpSummary from "./components/BuildUpSummary.jsx";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -12,5 +13,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <JapaneseCourseCosts />
     <StudentCollaborationCosts />
     <CommonCosts />
+    <BuildUpSummary />
   </React.StrictMode>
 );
