@@ -14,6 +14,11 @@ const LABELS = [
   { key: "common", label: "共通経費", match: "共通経費合計" },
 ];
 
+const MANAGEMENT_FEE_BY_WEEKS = {
+  1: 20000,
+  2: 30000,
+};
+
 function parseYen(text) {
   if (!text || text.trim() === "-") return 0;
   const value = Number(text.replace(/[^0-9.-]/g, ""));
@@ -49,7 +54,7 @@ function BuildUpSummaryCalculator({ root }) {
     Object.fromEntries(LABELS.map(({ key }) => [key, 0]))
   );
   const [participants, setParticipants] = useState("15");
-  const [managementRate, setManagementRate] = useState("10");
+  const [weeks, setWeeks] = useState("1");
 
   useEffect(() => {
     function refresh() {
@@ -71,28 +76,32 @@ function BuildUpSummaryCalculator({ root }) {
 
   const result = useMemo(() => {
     const directCost = Object.values(amounts).reduce((sum, value) => sum + value, 0);
-    const rate = Number(managementRate);
     const count = Number(participants);
-    const validRate = Number.isFinite(rate) && rate >= 0;
+    const weekCount = Number(weeks);
     const validCount = Number.isInteger(count) && count > 0;
-    const managementFee = validRate ? Math.round(directCost * (rate / 100)) : 0;
+    const managementFeePerParticipant = MANAGEMENT_FEE_BY_WEEKS[weekCount] ?? 0;
+    const validWeeks = managementFeePerParticipant > 0;
+    const managementFee = validCount && validWeeks
+      ? managementFeePerParticipant * count
+      : 0;
     const total = directCost + managementFee;
 
     return {
-      ok: validRate && validCount,
+      ok: validCount && validWeeks,
       directCost,
+      managementFeePerParticipant,
       managementFee,
       total,
       perParticipant: validCount ? total / count : 0,
     };
-  }, [amounts, managementRate, participants]);
+  }, [amounts, participants, weeks]);
 
   return (
     <div className="col-12" data-build-up-summary>
       <div className="hr" />
       <label>積み上げ方式の総合計</label>
       <div className="small">
-        各費用欄の合計を自動集計し、管理費を加えて案件全体と1人あたりの参考額を表示します。
+        各費用欄の合計を自動集計し、期間別の管理費を加えて案件全体と1人あたりの参考額を表示します。
       </div>
 
       <section className="visit-card">
@@ -113,14 +122,11 @@ function BuildUpSummaryCalculator({ root }) {
             />
           </label>
           <label>
-            管理費率（%）
-            <input
-              type="number"
-              min="0"
-              step="0.1"
-              value={managementRate}
-              onChange={(event) => setManagementRate(event.target.value)}
-            />
+            実施期間
+            <select value={weeks} onChange={(event) => setWeeks(event.target.value)}>
+              <option value="1">1週間</option>
+              <option value="2">2週間</option>
+            </select>
           </label>
         </div>
 
@@ -137,7 +143,11 @@ function BuildUpSummaryCalculator({ root }) {
               <td>{yen(Math.round(result.directCost))}</td>
             </tr>
             <tr>
-              <th>管理費</th>
+              <th>管理費（1人あたり）</th>
+              <td>{result.ok ? yen(result.managementFeePerParticipant) : "-"}</td>
+            </tr>
+            <tr>
+              <th>管理費合計</th>
               <td>{result.ok ? yen(Math.round(result.managementFee)) : "-"}</td>
             </tr>
             <tr className="print-total">
@@ -153,13 +163,13 @@ function BuildUpSummaryCalculator({ root }) {
 
         {!result.ok && (
           <div className="warn">
-            参加人数は1以上の整数、管理費率は0%以上で入力してください。
+            参加人数は1以上の整数で入力し、実施期間を選択してください。
           </div>
         )}
       </section>
 
       <div className="small">
-        ※ この総合計は積み上げ方式の内部試算です。正式見積の確定前に各費用と管理費率を確認してください。
+        ※ 管理費は、1週間は1人20,000円、2週間は1人30,000円として計算します。
       </div>
     </div>
   );
