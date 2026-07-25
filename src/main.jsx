@@ -7,6 +7,7 @@ import StudentCollaborationCosts from "./components/StudentCollaborationCosts.js
 import CommonCosts from "./components/CommonCosts.jsx";
 import BuildUpSummary from "./components/BuildUpSummary.jsx";
 import EstimateExcelExport from "./components/EstimateExcelExport.jsx";
+import EstimateExcelImport from "./components/EstimateExcelImport.jsx";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -14,6 +15,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <App />
     <ProgramBasicInfo />
     <EstimateExcelExport />
+    <EstimateExcelImport />
     <JapaneseCourseCosts />
     <StudentCollaborationCosts />
     <CommonCosts />
