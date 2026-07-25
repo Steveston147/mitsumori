@@ -79,7 +79,7 @@ function FormalDocumentTestPanel() {
       converaUrl: "",
     });
     setMessage(
-      "Convera Invoiceを準備しました。発行画面で今回専用のURLを入力してください。"
+      "Convera Invoiceを準備しました。正式文書発行欄で今回専用のURLを入力してください。"
     );
     window.setTimeout(() => window.location.reload(), 500);
   }
@@ -129,7 +129,7 @@ function FormalDocumentTestPanel() {
 
       {message && <div className="formal-test-message">{message}</div>}
       <div className="formal-test-warning">
-        Quotation／InvoiceはA4・1ページで出力します。Convera URLは案件ごとに異なるため保存済みURLを再利用せず、発行時に毎回入力し、印刷後に消去します。
+        Quotation／InvoiceはA4・1ページで出力します。情報量が増えた場合は支払情報と発行者情報を左右に配置します。Convera URLは案件ごとに異なるため、発行時に毎回入力し、印刷後に消去します。
       </div>
     </section>
   );
