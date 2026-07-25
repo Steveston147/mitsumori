@@ -17,6 +17,8 @@ const LABELS = [
 const MANAGEMENT_FEE_BY_WEEKS = {
   1: 20000,
   2: 30000,
+  3: 40000,
+  4: 50000,
 };
 
 function parseYen(text) {
@@ -126,6 +128,8 @@ function BuildUpSummaryCalculator({ root }) {
             <select value={weeks} onChange={(event) => setWeeks(event.target.value)}>
               <option value="1">1週間</option>
               <option value="2">2週間</option>
+              <option value="3">3週間</option>
+              <option value="4">4週間</option>
             </select>
           </label>
         </div>
@@ -169,7 +173,7 @@ function BuildUpSummaryCalculator({ root }) {
       </section>
 
       <div className="small">
-        ※ 管理費は、1週間は1人20,000円、2週間は1人30,000円として計算します。
+        ※ 管理費は1週間20,000円を基準に、1週間延長するごとに1人あたり10,000円を加算します。
       </div>
     </div>
   );
