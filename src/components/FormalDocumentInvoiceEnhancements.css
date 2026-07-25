@@ -1,0 +1,181 @@
+.formal-remarks-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 7px;
+}
+
+.formal-remarks-heading label {
+  margin: 0;
+}
+
+.formal-text-button {
+  width: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #7b1e2b;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.formal-text-button:hover {
+  text-decoration: underline;
+}
+
+.formal-purpose {
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid #d6d6d6;
+}
+
+.formal-purpose span,
+.formal-purpose strong {
+  display: block;
+}
+
+.formal-purpose span {
+  margin-bottom: 3px;
+  color: #666;
+  font-size: 7.5pt;
+  text-transform: uppercase;
+}
+
+.formal-purpose strong {
+  font-size: 8.5pt;
+  line-height: 1.35;
+}
+
+.formal-invoice-lower-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 9mm;
+  align-items: start;
+}
+
+.formal-invoice-lower-grid .formal-payment-block {
+  margin-top: 0;
+}
+
+.formal-remarks-block {
+  padding: 12px 14px;
+  border: 1px solid #cfcfcf;
+  page-break-inside: avoid;
+}
+
+.formal-remarks-block h3 {
+  margin: 0 0 7px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 11pt;
+}
+
+.formal-seal {
+  position: absolute;
+  top: 33mm;
+  right: 4mm;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  width: 22mm;
+  height: 22mm;
+  border: 2px solid #b21f2d;
+  color: #b21f2d;
+  transform: rotate(-4deg);
+  text-align: center;
+  opacity: 0.82;
+}
+
+.formal-seal::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1px solid #b21f2d;
+}
+
+.formal-seal span,
+.formal-seal strong {
+  position: relative;
+  display: block;
+  line-height: 1.05;
+}
+
+.formal-seal span {
+  font-size: 7pt;
+  letter-spacing: 0.08em;
+}
+
+.formal-seal strong {
+  max-width: 18mm;
+  margin-top: 2px;
+  font-size: 6.2pt;
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 860px) {
+  .formal-invoice-lower-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  body.formal-document-printing .formal-document-sheet {
+    position: relative;
+  }
+
+  body.formal-document-printing .formal-invoice-lower-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    margin-top: 4mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  body.formal-document-printing .formal-invoice-lower-grid .formal-payment-block,
+  body.formal-document-printing .formal-invoice-lower-grid .formal-remarks-block {
+    display: block;
+    width: auto;
+    margin: 0;
+    padding: 7px 8px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  body.formal-document-printing .formal-invoice-lower-grid h3 {
+    margin-bottom: 4px;
+    font-size: 9pt;
+  }
+
+  body.formal-document-printing .formal-purpose {
+    margin-top: 5px;
+    padding-top: 5px;
+  }
+
+  body.formal-document-printing .formal-issuer {
+    display: block;
+    width: 100%;
+    margin-top: 5mm;
+    padding-top: 4mm;
+    border-top: 1px solid #b8b8b8;
+    font-size: 7.2pt;
+    line-height: 1.3;
+  }
+
+  body.formal-document-printing .formal-seal {
+    top: 29mm;
+    right: 2mm;
+    width: 19mm;
+    height: 19mm;
+  }
+
+  body.formal-document-printing .formal-remarks-block .formal-preline,
+  body.formal-document-printing .formal-purpose strong {
+    font-size: 7.1pt;
+    line-height: 1.3;
+  }
+}
