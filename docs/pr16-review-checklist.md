@@ -1,5 +1,0 @@
-- Confirm the common information panel appears above the estimate mode tabs.
-- Confirm program name, student count, and duration update both estimate modes.
-- Confirm start/end dates calculate inclusive days and rounded-up weeks.
-- Confirm accommodation dates and first cancellation fee date are retained after reload.
-- Confirm no personal contact information fields were added.
