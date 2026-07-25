@@ -83,6 +83,9 @@ export default function BuildUpSaveStatus() {
       if (exportDescription) {
         exportDescription.textContent = "共通情報、入力値、計算表、再利用用データをExcelファイルとして出力します。";
       }
+
+      const completeButton = document.querySelector(".build-up-complete");
+      if (completeButton) completeButton.textContent = "一覧に戻る（入力内容を反映）";
     };
 
     const markDirty = (event) => {
