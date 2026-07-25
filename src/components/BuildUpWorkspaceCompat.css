@@ -1,0 +1,15 @@
+/*
+ * Japanese course, student collaboration, common costs and summary are mounted
+ * inside the legacy roadmap container. Keep that shared portal host available,
+ * while the workspace controls visibility of each nested section.
+ */
+[data-build-up-section="dashboard"]:has([data-build-up-section]) {
+  display: block !important;
+  grid-column: 1 / -1;
+}
+
+[data-build-up-active-view]:not([data-build-up-active-view="dashboard"])
+  .build-up-roadmap
+  + .btn {
+  display: none !important;
+}
