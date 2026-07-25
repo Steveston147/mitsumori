@@ -6,7 +6,11 @@ const LABELS = [
   { key: "company", label: "企業訪問", match: "企業訪問の直接経費合計" },
   { key: "culture", label: "日本文化体験", match: "日本文化体験の直接経費合計" },
   { key: "japanese", label: "日本語講座", match: "日本語講座合計" },
-  { key: "collaboration", label: "学生共修", match: "学生共修合計" },
+  {
+    key: "collaboration",
+    label: "学生共修・学内文化活動",
+    match: "学生共修・学内文化活動合計",
+  },
   { key: "common", label: "共通経費", match: "共通経費合計" },
 ];
 
@@ -36,6 +40,10 @@ function findAmount(root, match) {
   return 0;
 }
 
+function sameAmounts(current, next) {
+  return LABELS.every(({ key }) => current[key] === next[key]);
+}
+
 function BuildUpSummaryCalculator({ root }) {
   const [amounts, setAmounts] = useState(() =>
     Object.fromEntries(LABELS.map(({ key }) => [key, 0]))
@@ -45,11 +53,10 @@ function BuildUpSummaryCalculator({ root }) {
 
   useEffect(() => {
     function refresh() {
-      setAmounts(
-        Object.fromEntries(
-          LABELS.map(({ key, match }) => [key, findAmount(root, match)])
-        )
+      const next = Object.fromEntries(
+        LABELS.map(({ key, match }) => [key, findAmount(root, match)])
       );
+      setAmounts((current) => (sameAmounts(current, next) ? current : next));
     }
 
     refresh();
