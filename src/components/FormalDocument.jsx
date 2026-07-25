@@ -6,14 +6,22 @@ const STORAGE_KEY = "mitsumori.formalDocument";
 const PROGRAM_INFO_KEY = "mitsumori.programBasicInfo";
 const SERVICE_FEE = 5000;
 
+const BANK_DEFAULT_REMARKS =
+  "TEST VERSION — The official bank transfer remarks will be inserted after internal confirmation.";
+const CONVERA_DEFAULT_REMARKS =
+  "Please use the Convera payment link shown on this invoice. The payment link is issued specifically for this invoice.";
+
 const DEFAULT_FORM = {
   documentType: "QUOTATION",
   documentNumber: "",
   issueDate: new Date().toISOString().slice(0, 10),
+  dueDate: "",
   programFee: "",
   paymentMethod: "pending",
   bankDetails: "",
   converaUrl: "",
+  bankRemarks: BANK_DEFAULT_REMARKS,
+  converaRemarks: CONVERA_DEFAULT_REMARKS,
 };
 
 function loadJson(key, fallback) {
@@ -79,9 +87,14 @@ function FormalDocumentForm() {
   const programFee = Math.max(0, Number(form.programFee) || 0);
   const totalAmount = programFee + SERVICE_FEE;
   const isInvoice = form.documentType === "INVOICE";
+  const isBank = isInvoice && form.paymentMethod === "bank";
+  const isConvera = isInvoice && form.paymentMethod === "convera";
+  const activeRemarks = isBank ? form.bankRemarks : isConvera ? form.converaRemarks : "";
+
   const paymentReady = !isInvoice
-    || (form.paymentMethod === "bank" && form.bankDetails.trim())
-    || (form.paymentMethod === "convera" && form.converaUrl.trim());
+    || (isBank && form.bankDetails.trim())
+    || (isConvera && form.converaUrl.trim());
+
   const documentReady = Boolean(
     form.documentNumber.trim()
       && programInfo.universityName?.trim()
@@ -110,6 +123,27 @@ function FormalDocumentForm() {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function changePaymentMethod(value) {
+    setForm((current) => ({
+      ...current,
+      paymentMethod: value,
+      bankRemarks: current.bankRemarks || BANK_DEFAULT_REMARKS,
+      converaRemarks: current.converaRemarks || CONVERA_DEFAULT_REMARKS,
+      converaUrl: value === "convera" ? "" : current.converaUrl,
+    }));
+  }
+
+  function updateRemarks(value) {
+    update(isBank ? "bankRemarks" : "converaRemarks", value);
+  }
+
+  function resetRemarks() {
+    update(
+      isBank ? "bankRemarks" : "converaRemarks",
+      isBank ? BANK_DEFAULT_REMARKS : CONVERA_DEFAULT_REMARKS
+    );
+  }
+
   function importProgramFee() {
     const value = readCalculatedProgramFee();
     if (value !== null) update("programFee", String(Math.round(value)));
@@ -117,7 +151,12 @@ function FormalDocumentForm() {
 
   function printFormalDocument() {
     document.body.classList.add("formal-document-printing");
-    const cleanup = () => document.body.classList.remove("formal-document-printing");
+    const cleanup = () => {
+      document.body.classList.remove("formal-document-printing");
+      if (form.paymentMethod === "convera") {
+        setForm((current) => ({ ...current, converaUrl: "" }));
+      }
+    };
     window.addEventListener("afterprint", cleanup, { once: true });
     window.print();
     window.setTimeout(cleanup, 1000);
@@ -125,15 +164,21 @@ function FormalDocumentForm() {
 
   const paymentSection = useMemo(() => {
     if (!isInvoice) return null;
-    if (form.paymentMethod === "bank") {
+
+    if (isBank) {
       return (
         <section className="formal-payment-block">
           <h3>Payment Instructions</h3>
           <div className="formal-preline">{form.bankDetails}</div>
+          <div className="formal-purpose">
+            <span>Purpose</span>
+            <strong>{programInfo.programName || "—"}</strong>
+          </div>
         </section>
       );
     }
-    if (form.paymentMethod === "convera") {
+
+    if (isConvera) {
       return (
         <section className="formal-payment-block">
           <h3>Payment via Convera</h3>
@@ -142,8 +187,16 @@ function FormalDocumentForm() {
         </section>
       );
     }
+
     return null;
-  }, [form.bankDetails, form.converaUrl, form.paymentMethod, isInvoice]);
+  }, [
+    form.bankDetails,
+    form.converaUrl,
+    isBank,
+    isConvera,
+    isInvoice,
+    programInfo.programName,
+  ]);
 
   return (
     <>
@@ -193,6 +246,18 @@ function FormalDocumentForm() {
             />
           </div>
 
+          {isInvoice && (
+            <div className="formal-field">
+              <label>Payment Due Date（任意）</label>
+              <input
+                type="date"
+                min={form.issueDate || undefined}
+                value={form.dueDate}
+                onChange={(event) => update("dueDate", event.target.value)}
+              />
+            </div>
+          )}
+
           <div className="formal-field formal-field-wide">
             <label>Recipient Organization</label>
             <input value={programInfo.universityName || ""} readOnly />
@@ -237,7 +302,7 @@ function FormalDocumentForm() {
                 <label>Payment Method</label>
                 <select
                   value={form.paymentMethod}
-                  onChange={(event) => update("paymentMethod", event.target.value)}
+                  onChange={(event) => changePaymentMethod(event.target.value)}
                 >
                   <option value="pending">Not selected</option>
                   <option value="bank">Bank Transfer</option>
@@ -245,26 +310,55 @@ function FormalDocumentForm() {
                 </select>
               </div>
 
-              {form.paymentMethod === "bank" && (
-                <div className="formal-field formal-field-full">
-                  <label>Bank Account Information</label>
-                  <textarea
-                    value={form.bankDetails}
-                    onChange={(event) => update("bankDetails", event.target.value)}
-                    placeholder="Bank name, branch, account name, account number, SWIFT/BIC, payment reference, and any remittance instructions"
-                  />
-                </div>
+              {isBank && (
+                <>
+                  <div className="formal-field formal-field-wide">
+                    <label>Purpose（プログラム名称から自動転記）</label>
+                    <input value={programInfo.programName || ""} readOnly />
+                  </div>
+                  <div className="formal-field formal-field-full">
+                    <label>Bank Account Information</label>
+                    <textarea
+                      value={form.bankDetails}
+                      onChange={(event) => update("bankDetails", event.target.value)}
+                      placeholder="Bank name, branch, account name, account number, SWIFT/BIC, payment reference, and any remittance instructions"
+                    />
+                  </div>
+                </>
               )}
 
-              {form.paymentMethod === "convera" && (
+              {isConvera && (
                 <div className="formal-field formal-field-full">
-                  <label>Convera Payment URL</label>
+                  <label>Convera Payment URL（請求書発行ごとに入力）</label>
                   <input
                     type="url"
                     value={form.converaUrl}
                     onChange={(event) => update("converaUrl", event.target.value)}
                     placeholder="https://..."
+                    autoComplete="off"
                   />
+                  <div className="small">
+                    This URL is cleared after printing so that the next invoice requires a new link.
+                  </div>
+                </div>
+              )}
+
+              {(isBank || isConvera) && (
+                <div className="formal-field formal-field-full">
+                  <div className="formal-remarks-heading">
+                    <label>Remarks</label>
+                    <button type="button" className="formal-text-button" onClick={resetRemarks}>
+                      固定文言に戻す
+                    </button>
+                  </div>
+                  <textarea
+                    value={activeRemarks}
+                    onChange={(event) => updateRemarks(event.target.value)}
+                    placeholder="Remarks shown on the invoice"
+                  />
+                  <div className="small">
+                    A payment-method-specific standard text is inserted initially. You may add to or revise it before issuing the invoice.
+                  </div>
                 </div>
               )}
             </div>
@@ -300,10 +394,20 @@ function FormalDocumentForm() {
           <div className="formal-document-meta">
             <div><span>Document No.</span><strong>{form.documentNumber}</strong></div>
             <div><span>Issue Date</span><strong>{formatEnglishDate(form.issueDate)}</strong></div>
+            {isInvoice && form.dueDate && (
+              <div><span>Payment Due</span><strong>{formatEnglishDate(form.dueDate)}</strong></div>
+            )}
           </div>
         </header>
 
         <h1 className="formal-document-title">{form.documentType}</h1>
+
+        {isInvoice && (
+          <div className="formal-seal" aria-label="Temporary test seal">
+            <span>TEST</span>
+            <strong>RITSUMEIKAN</strong>
+          </div>
+        )}
 
         <section className="formal-recipient">
           <span>To:</span>
@@ -348,7 +452,15 @@ function FormalDocumentForm() {
           </tbody>
         </table>
 
-        {paymentSection}
+        {isInvoice ? (
+          <div className="formal-invoice-lower-grid">
+            {paymentSection}
+            <section className="formal-remarks-block">
+              <h3>Remarks</h3>
+              <div className="formal-preline">{activeRemarks || "—"}</div>
+            </section>
+          </div>
+        ) : null}
 
         <footer className="formal-issuer">
           <div className="formal-issuer-label">Issued by</div>
