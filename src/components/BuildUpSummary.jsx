@@ -19,6 +19,8 @@ const MANAGEMENT_FEE_BY_WEEKS = {
   2: 30000,
   3: 40000,
   4: 50000,
+  5: 60000,
+  6: 70000,
 };
 
 function parseYen(text) {
@@ -130,6 +132,8 @@ function BuildUpSummaryCalculator({ root }) {
               <option value="2">2週間</option>
               <option value="3">3週間</option>
               <option value="4">4週間</option>
+              <option value="5">5週間</option>
+              <option value="6">6週間</option>
             </select>
           </label>
         </div>
@@ -173,7 +177,7 @@ function BuildUpSummaryCalculator({ root }) {
       </section>
 
       <div className="small">
-        ※ 管理費は1週間20,000円を基準に、1週間延長するごとに1人あたり10,000円を加算します（2週間30,000円、3週間40,000円、4週間50,000円）。
+        ※ 管理費は1週間20,000円を基準に、1週間延長するごとに1人あたり10,000円を加算します（最大6週間・70,000円）。
       </div>
     </div>
   );
