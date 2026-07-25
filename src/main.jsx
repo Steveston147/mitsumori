@@ -9,12 +9,14 @@ import BuildUpSummary from "./components/BuildUpSummary.jsx";
 import EstimateExcelExport from "./components/EstimateExcelExport.jsx";
 import EstimateExcelImport from "./components/EstimateExcelImport.jsx";
 import BuildUpResetBridge from "./components/BuildUpResetBridge.jsx";
+import ProjectWorkspace from "./components/ProjectWorkspace.jsx";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <App />
     <ProgramBasicInfo />
+    <ProjectWorkspace />
     <EstimateExcelExport />
     <EstimateExcelImport />
     <JapaneseCourseCosts />
