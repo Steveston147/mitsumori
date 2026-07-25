@@ -231,6 +231,9 @@ export default function CommonCosts() {
 
   useEffect(() => {
     const roadmap = document.querySelector(".build-up-roadmap");
+    if (roadmap) {
+      roadmap.textContent = "印刷・PDFと全項目の総合計は今後のPRで追加します。";
+    }
     setTarget(roadmap?.parentElement ?? null);
   }, []);
 
