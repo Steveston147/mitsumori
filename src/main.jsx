@@ -11,6 +11,8 @@ import EstimateExcelImport from "./components/EstimateExcelImport.jsx";
 import BuildUpResetBridge from "./components/BuildUpResetBridge.jsx";
 import ProjectWorkspace from "./components/ProjectWorkspace.jsx";
 import ProfessionalUiShell from "./components/ProfessionalUiShell.jsx";
+import BuildUpWorkspace from "./components/BuildUpWorkspace.jsx";
+import "./components/BuildUpWorkspaceCompat.css";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -21,6 +23,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <ProjectWorkspace />
     <EstimateExcelExport />
     <EstimateExcelImport />
+    <BuildUpWorkspace />
     <JapaneseCourseCosts />
     <StudentCollaborationCosts />
     <CommonCosts />
