@@ -116,6 +116,13 @@
     margin: 9mm 11mm;
   }
 
+  html,
+  body.formal-document-printing {
+    width: 210mm;
+    height: 297mm;
+    overflow: hidden !important;
+  }
+
   body.formal-document-printing .formal-document-sheet {
     position: relative;
     width: 188mm;
@@ -173,9 +180,13 @@
     margin-top: 0;
     page-break-inside: avoid;
     break-inside: avoid;
+    display: inline-block;
+    width: 48.5%;
+    vertical-align: top;
   }
 
   body.formal-document-printing .formal-payment-block {
+    margin-right: 2%;
     padding: 8px 10px;
   }
 
@@ -207,21 +218,6 @@
   body.formal-document-printing .formal-issuer-email {
     margin-top: 2px;
     margin-bottom: 3px;
-  }
-
-  body.formal-document-printing .formal-payment-block + .formal-issuer {
-    margin-top: 0;
-  }
-
-  body.formal-document-printing .formal-payment-block,
-  body.formal-document-printing .formal-issuer {
-    display: inline-block;
-    width: 48.5%;
-    vertical-align: top;
-  }
-
-  body.formal-document-printing .formal-payment-block {
-    margin-right: 2%;
   }
 
   body.formal-document-printing .formal-document-sheet::before {
