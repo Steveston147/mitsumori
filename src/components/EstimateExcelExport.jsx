@@ -1,18 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import * as XLSX from "xlsx";
 import "./EstimateExcelExport.css";
 
 const SCHEMA_VERSION = "mitsumori-estimate-v1";
 const JSON_CHUNK_SIZE = 28000;
-
-function xmlEscape(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
 
 function safeJsonParse(value, fallback = null) {
   try {
@@ -111,18 +103,6 @@ function getBackupPayload() {
   };
 }
 
-function cell(value) {
-  return `<Cell><Data ss:Type="String">${xmlEscape(value)}</Data></Cell>`;
-}
-
-function row(values) {
-  return `<Row>${values.map(cell).join("")}</Row>`;
-}
-
-function worksheet(name, rows) {
-  return `<Worksheet ss:Name="${xmlEscape(name.slice(0, 31))}"><Table>${rows.join("")}</Table></Worksheet>`;
-}
-
 function splitText(text, size = JSON_CHUNK_SIZE) {
   const chunks = [];
   for (let offset = 0; offset < text.length; offset += size) {
@@ -131,69 +111,70 @@ function splitText(text, size = JSON_CHUNK_SIZE) {
   return chunks;
 }
 
+function setColumnWidths(sheet, widths) {
+  sheet["!cols"] = widths.map((wch) => ({ wch }));
+}
+
 function buildWorkbook(payload) {
+  const workbook = XLSX.utils.book_new();
+
   const summaryRows = [
-    row(["項目", "内容"]),
-    row(["スキーマ", payload.schemaVersion]),
-    row(["出力日時", payload.exportedAt]),
-    ...Object.entries(payload.programBasicInfo).map(([key, value]) => row([key, value])),
-    ...payload.summary.map(([label, value]) => row([label, value])),
+    ["項目", "内容"],
+    ["スキーマ", payload.schemaVersion],
+    ["出力日時", payload.exportedAt],
+    ...Object.entries(payload.programBasicInfo),
+    ...payload.summary,
   ];
+  const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows);
+  setColumnWidths(summarySheet, [30, 60]);
+  XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
 
   const inputRows = [
-    row(["区分", "項目", "値", "入力種別"]),
-    ...payload.inputs.map((item) => row([item.section, item.label, item.value, item.type])),
+    ["区分", "項目", "値", "入力種別"],
+    ...payload.inputs.map((item) => [item.section, item.label, item.value, item.type]),
   ];
+  const inputsSheet = XLSX.utils.aoa_to_sheet(inputRows);
+  setColumnWidths(inputsSheet, [18, 38, 40, 14]);
+  XLSX.utils.book_append_sheet(workbook, inputsSheet, "Inputs");
 
-  const tableRows = [row(["表名", "列1", "列2", "列3", "列4", "列5"])];
+  const tableRows = [["表名", "列1", "列2", "列3", "列4", "列5"]];
   payload.tables.forEach((table) => {
-    tableRows.push(row([table.heading]));
-    table.rows.forEach((values) => tableRows.push(row(["", ...values.slice(0, 5)])));
-    tableRows.push(row([]));
+    tableRows.push([table.heading]);
+    table.rows.forEach((values) => tableRows.push(["", ...values.slice(0, 5)]));
+    tableRows.push([]);
   });
+  const calculationSheet = XLSX.utils.aoa_to_sheet(tableRows);
+  setColumnWidths(calculationSheet, [34, 28, 28, 22, 22, 22]);
+  XLSX.utils.book_append_sheet(workbook, calculationSheet, "Calculation Tables");
 
   const jsonChunks = splitText(JSON.stringify(payload));
   const transferRows = [
-    row(["アプリ間連携・バックアップ用データです。JSONチャンクを編集しないでください。"]),
-    row(["schemaVersion", payload.schemaVersion]),
-    row(["chunkCount", jsonChunks.length]),
-    ...jsonChunks.map((chunk, index) => row([`payloadJson_${index + 1}`, chunk])),
+    ["アプリ間連携・バックアップ用データです。JSONチャンクを編集しないでください。"],
+    ["schemaVersion", payload.schemaVersion],
+    ["chunkCount", jsonChunks.length],
+    ...jsonChunks.map((chunk, index) => [`payloadJson_${index + 1}`, chunk]),
   ];
+  const transferSheet = XLSX.utils.aoa_to_sheet(transferRows);
+  setColumnWidths(transferSheet, [24, 120]);
+  XLSX.utils.book_append_sheet(workbook, transferSheet, "TransferData");
 
-  return `<?xml version="1.0"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:o="urn:schemas-microsoft-com:office:office"
- xmlns:x="urn:schemas-microsoft-com:office:excel"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
- <Styles><Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Font ss:FontName="Aptos" ss:Size="10"/></Style></Styles>
- ${worksheet("Summary", summaryRows)}
- ${worksheet("Inputs", inputRows)}
- ${worksheet("Calculation Tables", tableRows)}
- ${worksheet("TransferData", transferRows)}
-</Workbook>`;
+  return workbook;
 }
 
 function makeFilename(payload) {
   const name = payload.programBasicInfo?.programName || "estimate";
   const safeName = String(name).replace(/[\\/:*?"<>|]/g, "_").trim() || "estimate";
   const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15);
-  return `${safeName}_${stamp}.xls`;
+  return `${safeName}_${stamp}.xlsx`;
 }
 
 function downloadExcel() {
   const payload = getBackupPayload();
-  const blob = new Blob([buildWorkbook(payload)], {
-    type: "application/vnd.ms-excel;charset=utf-8",
+  const workbook = buildWorkbook(payload);
+  XLSX.writeFile(workbook, makeFilename(payload), {
+    bookType: "xlsx",
+    compression: true,
   });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = makeFilename(payload);
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function ExportPanel() {
@@ -202,7 +183,7 @@ function ExportPanel() {
   function handleExport() {
     try {
       downloadExcel();
-      setMessage("Excelを出力しました。");
+      setMessage("Excel（.xlsx）を出力しました。");
     } catch (error) {
       console.error(error);
       setMessage("Excel出力に失敗しました。入力内容を確認してください。");
@@ -214,7 +195,7 @@ function ExportPanel() {
     <section className="estimate-export-panel no-print">
       <div>
         <strong>Excelバックアップ／アプリ間連携</strong>
-        <p>共通情報、入力値、計算表、再利用用データを1つのExcelファイルに保存します。</p>
+        <p>共通情報、入力値、計算表、再利用用データを正式な.xlsxファイルに保存します。</p>
       </div>
       <button className="btn estimate-export-button" type="button" onClick={handleExport}>
         Excelにエクスポート
