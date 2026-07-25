@@ -11,6 +11,7 @@ import FormalDocumentTestSupport from "./components/FormalDocumentTestSupport.js
 import "./styles.css";
 import "./components/FormalDocument.css";
 import "./components/FormalDocumentTestSupport.css";
+import "./components/FormalDocumentInvoiceEnhancements.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
