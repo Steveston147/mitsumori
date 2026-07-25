@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import {
   clearCurrentEstimate,
   readProjectHistory,
+  rememberCurrentProject,
   removeProject,
   restoreProject,
 } from "../state/projectHistory.js";
@@ -38,18 +39,29 @@ function WorkspacePanel() {
       setHistory(readProjectHistory());
       setName(currentProjectName());
     };
+    const captureSave = (event) => {
+      if (!event.target.closest("[data-estimate-excel-export] button")) return;
+      window.setTimeout(() => rememberCurrentProject("save"), 0);
+    };
+
+    if (window.sessionStorage.getItem("mitsumori.importMessage")) {
+      rememberCurrentProject("import");
+    }
+
     window.addEventListener("mitsumori-project-history-change", refresh);
     window.addEventListener("program-basic-info-change", refresh);
+    document.addEventListener("click", captureSave, true);
     return () => {
       window.removeEventListener("mitsumori-project-history-change", refresh);
       window.removeEventListener("program-basic-info-change", refresh);
+      document.removeEventListener("click", captureSave, true);
     };
   }, []);
 
   const recent = useMemo(() => history.slice(0, 6), [history]);
 
   function newEstimate() {
-    if (!window.confirm("新しい見積を開始します。現在の入力内容は消去されます。保存が必要な場合は先にExcelへエクスポートしてください。")) return;
+    if (!window.confirm("新しい見積を開始します。現在の入力内容は消去されます。保存が必要な場合は先にExcelへ保存してください。")) return;
     clearCurrentEstimate();
     window.location.reload();
   }
@@ -94,14 +106,7 @@ function WorkspacePanel() {
                 <strong>{entry.name}</strong>
                 <span>{formatDate(entry.updatedAt)}・{entry.source === "import" ? "Excel読込" : "Excel保存"}</span>
               </button>
-              <button
-                type="button"
-                className="project-recent-remove"
-                aria-label={`${entry.name}を履歴から削除`}
-                onClick={() => removeProject(entry.id)}
-              >
-                ×
-              </button>
+              <button type="button" className="project-recent-remove" aria-label={`${entry.name}を履歴から削除`} onClick={() => removeProject(entry.id)}>×</button>
             </div>
           ))}
         </div>
