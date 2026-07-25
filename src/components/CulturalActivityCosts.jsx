@@ -29,8 +29,8 @@ export function createCulturalActivity() {
 
 function getVisibleCount(value) {
   const count = Number(value);
-  if (!Number.isFinite(count) || count <= 0) return 0;
-  return Math.min(Math.floor(count), MAX_ACTIVITY_DETAILS);
+  if (!Number.isInteger(count) || count <= 0) return 0;
+  return Math.min(count, MAX_ACTIVITY_DETAILS);
 }
 
 export default function CulturalActivityCosts({ count, activities, onChange }) {
@@ -39,6 +39,7 @@ export default function CulturalActivityCosts({ count, activities, onChange }) {
 
   const visibleCount = getVisibleCount(count);
   const requestedCount = Number(count);
+  const countIsInvalid = !Number.isInteger(requestedCount) || requestedCount < 0;
   const visibleActivities = Array.from({ length: visibleCount }, (_, index) => savedActivities[index] ?? createCulturalActivity());
   const summaries = visibleActivities.map((activity) => calcCostGroup(activity.lines));
   const sectionTotal = summaries.reduce((sum, summary) => sum + summary.total, 0);
@@ -64,8 +65,9 @@ export default function CulturalActivityCosts({ count, activities, onChange }) {
       <div className="hr" />
       <label>日本文化体験別の直接経費</label>
       <div className="small">文化体験回数に合わせて入力欄を表示します。回数を減らした場合も入力内容を保持します。</div>
-      {requestedCount > MAX_ACTIVITY_DETAILS && <div className="warn">詳細入力は最大{MAX_ACTIVITY_DETAILS}回分まで表示しています。</div>}
-      {visibleCount === 0 && <div className="cost-empty">日本文化体験が1回以上の場合に、体験別の経費入力欄を表示します。</div>}
+      {countIsInvalid && <div className="warn">日本文化体験回数は0以上の整数で入力してください。</div>}
+      {!countIsInvalid && requestedCount > MAX_ACTIVITY_DETAILS && <div className="warn">詳細入力は最大{MAX_ACTIVITY_DETAILS}回分まで表示しています。</div>}
+      {!countIsInvalid && visibleCount === 0 && <div className="cost-empty">日本文化体験が1回以上の場合に、体験別の経費入力欄を表示します。</div>}
       {visibleActivities.map((activity, activityIndex) => {
         const summary = summaries[activityIndex];
         return <section className="visit-card" key={activityIndex}>
@@ -78,14 +80,14 @@ export default function CulturalActivityCosts({ count, activities, onChange }) {
               return <tr key={line.key} className={!lineResult.ok ? "cost-line-invalid" : undefined}>
                 <td>{line.custom ? <input value={line.label} placeholder={`任意項目${lineIndex - PRESET_LINES.length + 1}`} onChange={(e) => updateLine(activityIndex, lineIndex, "label", e.target.value)} /> : line.label}</td>
                 <td><input type="number" min="0" step="1000" value={line.unitPrice} placeholder="金額" onChange={(e) => updateLine(activityIndex, lineIndex, "unitPrice", e.target.value)} /></td>
-                <td><input type="number" min="0.01" step="1" value={line.quantity} onChange={(e) => updateLine(activityIndex, lineIndex, "quantity", e.target.value)} /></td>
+                <td><input type="number" min="1" step="1" value={line.quantity} onChange={(e) => updateLine(activityIndex, lineIndex, "quantity", e.target.value)} /></td>
                 <td><select value={line.taxMode} onChange={(e) => updateLine(activityIndex, lineIndex, "taxMode", e.target.value)}>{TAX_MODE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></td>
                 <td>{lineResult.status === "calculated" ? yen(Math.round(lineResult.taxAmount)) : "-"}</td>
                 <td>{lineResult.status === "calculated" ? yen(Math.round(lineResult.total)) : "-"}</td>
               </tr>;
             })}
           </tbody></table></div>
-          {!summary.ok && <div className="warn">単価は0円以上、数量は0より大きい数字で入力してください。</div>}
+          {!summary.ok && <div className="warn">単価は0円以上、数量・人数は1以上の整数で入力してください。</div>}
         </section>;
       })}
       {visibleCount > 0 && <div className="visit-section-total"><div><span>日本文化体験の消費税合計</span><strong>{hasInput ? yen(Math.round(sectionTax)) : "-"}</strong></div><div><span>日本文化体験の直接経費合計</span><strong>{hasInput ? yen(Math.round(sectionTotal)) : "-"}</strong></div></div>}
