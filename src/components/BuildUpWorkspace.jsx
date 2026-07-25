@@ -162,6 +162,94 @@ function EditorFooter({ amount, onComplete }) {
   );
 }
 
+function ReviewOverview({ reviews, directCost, onOpen }) {
+  const editableReviews = reviews.filter(({ section }) => section.key !== "summary");
+  const attention = editableReviews.filter(({ status }) => status.tone === "attention");
+  const progress = editableReviews.filter(({ status }) => status.tone === "progress");
+  const empty = editableReviews.filter(({ status }) => status.tone === "empty");
+  const complete = editableReviews.filter(({ status }) => status.tone === "complete");
+  const excluded = editableReviews.filter(({ status }) => status.tone === "excluded");
+
+  const reviewTone = attention.length > 0
+    ? "attention"
+    : progress.length > 0 || empty.length > 0
+      ? "progress"
+      : "complete";
+  const reviewLabel = attention.length > 0
+    ? "要確認あり"
+    : progress.length > 0 || empty.length > 0
+      ? "入力途中"
+      : "確認完了";
+  const nextReview = attention[0] ?? progress[0] ?? empty[0] ?? null;
+
+  return (
+    <section
+      className={`build-up-review-overview ${reviewTone}`}
+      aria-label="見積入力状況"
+      style={{
+        marginTop: 18,
+        padding: 16,
+        border: "1px solid var(--app-border, #d9e1ec)",
+        borderRadius: 14,
+        background: reviewTone === "attention" ? "#fffaf0" : reviewTone === "complete" ? "#f5fbf7" : "#f7faff",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
+        <div>
+          <span className={`build-up-status ${reviewTone}`}>{reviewLabel}</span>
+          <h3 style={{ marginTop: 10 }}>Excel出力前の確認状況</h3>
+          <p>
+            {attention.length > 0
+              ? `要確認のカテゴリーが${attention.length}件あります。内容を確認してからExcelを出力してください。`
+              : progress.length > 0 || empty.length > 0
+                ? "未入力または入力途中のカテゴリーがあります。必要な費用だけ確認してください。"
+                : "入力したカテゴリーに要確認項目はありません。見積サマリーで金額を確認できます。"}
+          </p>
+        </div>
+        <div style={{ minWidth: 190, textAlign: "right" }}>
+          <span style={{ display: "block", color: "var(--app-muted, #667085)", fontSize: 11 }}>直接経費合計</span>
+          <strong style={{ display: "block", marginTop: 4, fontSize: 22, fontVariantNumeric: "tabular-nums" }}>{formatYen(directCost)}</strong>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 10, marginTop: 14 }}>
+        {[
+          ["入力済み", complete.length],
+          ["入力中", progress.length],
+          ["未入力", empty.length],
+          ["要確認", attention.length],
+          ["対象外", excluded.length],
+        ].map(([label, count]) => (
+          <div key={label} style={{ padding: "10px 12px", border: "1px solid var(--app-border, #d9e1ec)", borderRadius: 10, background: "#fff" }}>
+            <span style={{ display: "block", color: "var(--app-muted, #667085)", fontSize: 11 }}>{label}</span>
+            <strong style={{ display: "block", marginTop: 2, fontSize: 18 }}>{count}件</strong>
+          </div>
+        ))}
+      </div>
+
+      {nextReview ? (
+        <button
+          type="button"
+          className="build-up-back"
+          onClick={() => onOpen(nextReview.section.key)}
+          style={{ marginTop: 14 }}
+        >
+          {nextReview.section.title}を確認する →
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="build-up-back"
+          onClick={() => onOpen("summary")}
+          style={{ marginTop: 14 }}
+        >
+          見積サマリーを確認する →
+        </button>
+      )}
+    </section>
+  );
+}
+
 function Workspace({ root }) {
   const [view, setView] = useState(() => window.sessionStorage.getItem(VIEW_KEY) || "dashboard");
   const [revision, setRevision] = useState(0);
@@ -208,6 +296,14 @@ function Workspace({ root }) {
   const amounts = useMemo(
     () => Object.fromEntries(SECTIONS.map((section) => [section.key, findAmount(root, section.match)])),
     [root, revision]
+  );
+
+  const reviews = useMemo(
+    () => SECTIONS.map((section) => ({
+      section,
+      status: readStatus(section, amounts[section.key], root),
+    })),
+    [amounts, root, revision]
   );
 
   const directCost = SECTIONS.filter((section) => section.key !== "summary").reduce(
@@ -259,9 +355,10 @@ function Workspace({ root }) {
         </div>
       </div>
 
+      <ReviewOverview reviews={reviews} directCost={directCost} onOpen={setView} />
+
       <div className="build-up-category-grid">
-        {SECTIONS.map((section) => {
-          const status = readStatus(section, amounts[section.key], root);
+        {reviews.map(({ section, status }) => {
           const action = section.key === "summary"
             ? "確認する"
             : status.tone === "complete"
