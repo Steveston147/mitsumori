@@ -97,6 +97,7 @@ function BuildUpSummaryCalculator({ root, printTarget }) {
     const totalExpenses = directCost + universityAllocation;
     const grossProfitBeforeUniversityAllocation = sales - totalExpenses;
     const grossProfit = grossProfitBeforeUniversityAllocation + universityAllocation;
+    const grossProfitRate = sales > 0 ? (grossProfit / sales) * 100 : 0;
 
     return {
       ok: validCount && validWeeks,
@@ -109,7 +110,9 @@ function BuildUpSummaryCalculator({ root, printTarget }) {
       totalExpenses,
       grossProfitBeforeUniversityAllocation,
       grossProfit,
+      grossProfitRate,
       perParticipant: validCount ? sales / count : 0,
+      grossProfitPerParticipant: validCount ? grossProfit / count : 0,
     };
   }, [amounts, participants, weeks]);
 
@@ -191,6 +194,14 @@ function BuildUpSummaryCalculator({ root, printTarget }) {
           <tr className="print-total">
             <th>粗利（大学按分額加算後）</th>
             <td>{result.ok ? yen(Math.round(result.grossProfit)) : "-"}</td>
+          </tr>
+          <tr>
+            <th>粗利率</th>
+            <td>{result.ok ? `${result.grossProfitRate.toFixed(1)}％` : "-"}</td>
+          </tr>
+          <tr>
+            <th>1人あたり粗利</th>
+            <td>{result.ok ? yen(Math.round(result.grossProfitPerParticipant)) : "-"}</td>
           </tr>
           <tr className="print-total">
             <th>1人あたり参考額</th>
@@ -291,6 +302,14 @@ function BuildUpSummaryCalculator({ root, printTarget }) {
               <tr className="print-total">
                 <th>粗利（大学按分額加算後）</th>
                 <td>{result.ok ? yen(Math.round(result.grossProfit)) : "-"}</td>
+              </tr>
+              <tr>
+                <th>粗利率</th>
+                <td>{result.ok ? `${result.grossProfitRate.toFixed(1)}％` : "-"}</td>
+              </tr>
+              <tr>
+                <th>1人あたり粗利</th>
+                <td>{result.ok ? yen(Math.round(result.grossProfitPerParticipant)) : "-"}</td>
               </tr>
               <tr className="print-total">
                 <th>1人あたり参考額</th>
