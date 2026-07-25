@@ -84,7 +84,7 @@ function evaluateVisitSection(count, state, noun) {
     let costGroupValid = true;
     enteredLines.forEach((line) => {
       const valid = isFiniteAtLeast(line.unitPrice, 0)
-        && isFiniteAtLeast(line.quantity, Number.EPSILON)
+        && isPositiveInteger(line.quantity)
         && VALID_TAX_MODES.has(line.taxMode)
         && (!line.custom || hasValue(line.label));
       if (!valid) {
