@@ -19,6 +19,13 @@ const DEFAULT_INFO = {
   accommodationArrangement: "未定",
 };
 
+const LEGACY_COMMON_LABELS = [
+  "案件名（メモ用）",
+  "案件名（積み上げ方式用・メモ）",
+  "参加人数（見込み）",
+  "実施期間（週）",
+];
+
 function loadInfo() {
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
@@ -37,19 +44,36 @@ function countDays(startDate, endDate) {
   return Math.floor(milliseconds / 86400000) + 1;
 }
 
-function updateLegacyInput(labelText, value) {
-  const labels = Array.from(document.querySelectorAll("label"));
-  const label = labels.find((candidate) => candidate.textContent.trim() === labelText);
-  const input = label?.parentElement?.querySelector("input, select");
-  if (!input || String(input.value) === String(value)) return;
+function findLabels(labelText) {
+  return Array.from(document.querySelectorAll("label")).filter(
+    (candidate) => candidate.textContent.trim() === labelText
+  );
+}
 
-  const prototype = input.tagName === "SELECT"
-    ? window.HTMLSelectElement.prototype
-    : window.HTMLInputElement.prototype;
-  const setter = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
-  setter?.call(input, String(value));
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  input.dispatchEvent(new Event("change", { bubbles: true }));
+function updateLegacyInputs(labelText, value) {
+  findLabels(labelText).forEach((label) => {
+    const input = label.parentElement?.querySelector("input, select");
+    if (!input || String(input.value) === String(value)) return;
+
+    const prototype = input.tagName === "SELECT"
+      ? window.HTMLSelectElement.prototype
+      : window.HTMLInputElement.prototype;
+    const setter = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
+    setter?.call(input, String(value));
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+}
+
+function hideLegacyCommonFields() {
+  LEGACY_COMMON_LABELS.forEach((labelText) => {
+    findLabels(labelText).forEach((label) => {
+      const field = label.closest(".col-3, .col-4, .col-8, .col-12");
+      if (field && !field.closest("[data-program-basic-info]")) {
+        field.hidden = true;
+      }
+    });
+  });
 }
 
 function Field({ label, children, className = "col-4" }) {
@@ -80,11 +104,23 @@ function ProgramBasicInfoForm() {
       })
     );
 
-    updateLegacyInput("案件名（メモ用）", info.programName);
-    updateLegacyInput("案件名（積み上げ方式用・メモ）", info.programName);
-    updateLegacyInput("参加人数（見込み）", info.studentCount);
-    if (durationWeeks) updateLegacyInput("実施期間（週）", durationWeeks);
+    updateLegacyInputs("案件名（メモ用）", info.programName);
+    updateLegacyInputs("案件名（積み上げ方式用・メモ）", info.programName);
+    updateLegacyInputs("参加人数（見込み）", info.studentCount);
+    updateLegacyInputs("参加人数", info.studentCount);
+    if (durationWeeks) {
+      updateLegacyInputs("実施期間（週）", durationWeeks);
+      updateLegacyInputs("実施期間", durationWeeks);
+    }
+    hideLegacyCommonFields();
   }, [info, durationDays, durationWeeks, totalCount]);
+
+  useEffect(() => {
+    hideLegacyCommonFields();
+    const observer = new MutationObserver(hideLegacyCommonFields);
+    observer.observe(document.body, { subtree: true, childList: true });
+    return () => observer.disconnect();
+  }, []);
 
   function update(key, value) {
     setInfo((current) => ({ ...current, [key]: value }));
