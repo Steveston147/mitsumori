@@ -75,16 +75,15 @@
 
 /*
  * Temporary invoice seal.
- * It is intentionally positioned beside the Issued by contact block,
- * matching the placement of a Japanese square company seal on formal forms.
+ * The issuer block and seal share the same page-bottom anchor so the seal
+ * always appears immediately to the right of the contact details.
  * The temporary CSS seal will later be replaced by the official transparent PNG.
  */
 .formal-seal {
   position: absolute;
-  top: auto;
   right: auto;
-  bottom: 7mm;
-  left: 69mm;
+  bottom: 11mm;
+  left: 77mm;
   z-index: 2;
   display: grid;
   place-content: center;
@@ -164,23 +163,41 @@
     padding-top: 5px;
   }
 
+  /*
+   * Lock the issuer block to the lower-left corner. This mirrors the approved
+   * invoice format and gives the seal a stable adjacent anchor.
+   */
   body.formal-document-printing .formal-issuer {
+    position: absolute;
+    left: 0;
+    bottom: 8mm;
     display: block;
-    width: 100%;
-    min-height: 24mm;
-    margin-top: 5mm;
-    padding-top: 4mm;
-    padding-right: 30mm;
-    border-top: 1px solid #b8b8b8;
+    width: 72mm;
+    min-height: 25mm;
+    margin: 0;
+    padding: 5mm 0 0;
+    border-top: 0;
     font-size: 7.2pt;
     line-height: 1.3;
   }
 
+  body.formal-document-printing .formal-issuer::before {
+    content: "Notes:\A 1. This invoice is issued based on the program details above.\A 2. The program will be confirmed only after the agreement is executed and full payment is received.\A 3. Accommodation, airfare, meals, and local transportation are not included unless otherwise stated.\A 4. Any bank transfer fees shall be borne by the remitting institution.";
+    position: absolute;
+    left: 0;
+    bottom: 31mm;
+    width: 178mm;
+    white-space: pre-line;
+    color: #111820;
+    font-size: 7pt;
+    font-weight: 400;
+    line-height: 1.35;
+  }
+
   body.formal-document-printing .formal-seal {
-    top: auto;
     right: auto;
-    bottom: 6mm;
-    left: 67mm;
+    bottom: 10mm;
+    left: 76mm;
     width: 20mm;
     height: 20mm;
   }
