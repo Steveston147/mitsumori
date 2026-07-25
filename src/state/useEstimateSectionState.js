@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 const PREFIX = "mitsumori.estimateState.";
 export const RESET_EVENT = "mitsumori-reset-estimate-sections";
+export const ESTIMATE_SECTION_CHANGE_EVENT = "mitsumori-estimate-section-change";
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -24,6 +25,11 @@ export function useEstimateSectionState(section, initialValue) {
 
   useEffect(() => {
     window.localStorage.setItem(`${PREFIX}${section}`, JSON.stringify(value));
+    window.dispatchEvent(
+      new CustomEvent(ESTIMATE_SECTION_CHANGE_EVENT, {
+        detail: { section },
+      })
+    );
   }, [section, value]);
 
   useEffect(() => {
