@@ -150,9 +150,27 @@ function readStatus(section, amount, root) {
   return { label: "未設定", tone: "empty" };
 }
 
+function EditorFooter({ amount, onComplete }) {
+  return (
+    <section className="build-up-editor-footer no-print" data-build-up-workspace>
+      <div className="build-up-editor-footer-status">
+        <span className="build-up-save-indicator" aria-hidden="true">✓</span>
+        <div>
+          <strong>入力内容は自動反映されています</strong>
+          <span>現在の小計：{formatYen(amount)}。Excelファイルへの保存は、見積画面の保存機能で行います。</span>
+        </div>
+      </div>
+      <button className="build-up-complete" type="button" onClick={onComplete}>
+        入力内容を反映して費用一覧へ戻る
+      </button>
+    </section>
+  );
+}
+
 function Workspace({ root }) {
   const [view, setView] = useState(() => window.sessionStorage.getItem(VIEW_KEY) || "dashboard");
   const [revision, setRevision] = useState(0);
+  const [footerTarget, setFooterTarget] = useState(null);
 
   useEffect(() => {
     applyView(root, view);
@@ -161,6 +179,16 @@ function Workspace({ root }) {
       root.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [root, view]);
+
+  useEffect(() => {
+    const card = root.querySelector(":scope > .card");
+    if (!card) return;
+    const mount = document.createElement("div");
+    mount.dataset.buildUpWorkspaceFooterMount = "";
+    card.appendChild(mount);
+    setFooterTarget(mount);
+    return () => mount.remove();
+  }, [root]);
 
   useEffect(() => {
     const refresh = () => {
@@ -191,23 +219,32 @@ function Workspace({ root }) {
   );
 
   const active = SECTIONS.find((section) => section.key === view);
+  const returnToDashboard = () => setView("dashboard");
 
   if (view !== "dashboard") {
     return (
-      <section className="build-up-workspace build-up-editor-heading no-print" data-build-up-workspace>
-        <button className="build-up-back" type="button" onClick={() => setView("dashboard")}>
-          <span aria-hidden="true">←</span> 費用一覧に戻る
-        </button>
-        <div>
-          <span className="build-up-eyebrow">積み上げ方式・個別編集</span>
-          <h3>{active?.title}</h3>
-          <p>{active?.description}</p>
-        </div>
-        <div className="build-up-editor-total">
-          <span>現在の小計</span>
-          <strong>{formatYen(amounts[view])}</strong>
-        </div>
-      </section>
+      <>
+        <section className="build-up-workspace build-up-editor-heading no-print" data-build-up-workspace>
+          <button className="build-up-back" type="button" onClick={returnToDashboard}>
+            <span aria-hidden="true">←</span> 費用一覧に戻る
+          </button>
+          <div>
+            <span className="build-up-eyebrow">積み上げ方式・個別編集</span>
+            <h3>{active?.title}</h3>
+            <p>{active?.description}</p>
+          </div>
+          <div className="build-up-editor-total">
+            <span>現在の小計</span>
+            <strong>{formatYen(amounts[view])}</strong>
+          </div>
+        </section>
+        {footerTarget
+          ? createPortal(
+              <EditorFooter amount={amounts[view]} onComplete={returnToDashboard} />,
+              footerTarget
+            )
+          : null}
+      </>
     );
   }
 
