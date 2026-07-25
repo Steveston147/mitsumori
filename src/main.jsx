@@ -12,6 +12,7 @@ import "./styles.css";
 import "./components/FormalDocument.css";
 import "./components/FormalDocumentTestSupport.css";
 import "./components/FormalDocumentInvoiceEnhancements.css";
+import "./components/FormalDocumentGoalScale.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
