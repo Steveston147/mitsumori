@@ -79,6 +79,10 @@
   padding: 12px 14px;
 }
 
+.build-up-complete {
+  color: #fff !important;
+}
+
 @media (max-width: 820px) {
   .build-up-save-state {
     align-items: stretch;
