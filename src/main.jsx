@@ -8,6 +8,7 @@ import CommonCosts from "./components/CommonCosts.jsx";
 import BuildUpSummary from "./components/BuildUpSummary.jsx";
 import EstimateExcelExport from "./components/EstimateExcelExport.jsx";
 import EstimateExcelImport from "./components/EstimateExcelImport.jsx";
+import FormStatePersistence from "./components/FormStatePersistence.jsx";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -20,5 +21,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <StudentCollaborationCosts />
     <CommonCosts />
     <BuildUpSummary />
+    <FormStatePersistence />
   </React.StrictMode>
 );
