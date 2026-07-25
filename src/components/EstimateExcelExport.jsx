@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import "./EstimateExcelExport.css";
 
 const SCHEMA_VERSION = "mitsumori-estimate-v1";
+const JSON_CHUNK_SIZE = 28000;
 
 function xmlEscape(value) {
   return String(value ?? "")
@@ -22,9 +23,14 @@ function safeJsonParse(value, fallback = null) {
 }
 
 function getFieldValue(control) {
-  if (!control) return "";
   if (control.type === "checkbox") return control.checked ? "true" : "false";
   return control.value ?? "";
+}
+
+function getInputSection(control) {
+  if (control.closest("[data-program-basic-info]")) return "共通情報";
+  const modeRoot = control.closest("div[hidden]");
+  return modeRoot?.querySelector(".mode-title")?.textContent?.trim() || "見積入力";
 }
 
 function collectInputs() {
@@ -32,20 +38,17 @@ function collectInputs() {
   const seen = new Set();
 
   document.querySelectorAll("label").forEach((label, index) => {
-    const container = label.parentElement;
-    const control = container?.querySelector("input, select, textarea");
+    const control = label.parentElement?.querySelector("input, select, textarea");
     if (!control) return;
 
-    const key = `${label.textContent.trim()}::${control.name || control.id || index}`;
+    const labelText = label.textContent.trim();
+    const key = `${labelText}::${control.name || control.id || index}`;
     if (seen.has(key)) return;
     seen.add(key);
 
-    const mode = control.closest('[hidden]')?.querySelector?.(".mode-title")?.textContent?.trim()
-      || control.closest('[data-program-basic-info]') ? "共通情報" : "見積入力";
-
     rows.push({
-      section: mode,
-      label: label.textContent.trim(),
+      section: getInputSection(control),
+      label: labelText,
       value: getFieldValue(control),
       type: control.tagName.toLowerCase(),
     });
@@ -58,11 +61,10 @@ function collectTables() {
   const tables = [];
   document.querySelectorAll("table").forEach((table, index) => {
     if (table.closest(".print-summary")) return;
-    const heading = table.previousElementSibling?.textContent?.trim()
-      || table.closest(".col-12")?.querySelector("label")?.textContent?.trim()
+    const heading = table.closest(".col-12")?.querySelector("label")?.textContent?.trim()
       || `Table ${index + 1}`;
-    const rows = Array.from(table.rows).map((row) =>
-      Array.from(row.cells).map((cell) => cell.textContent.replace(/\s+/g, " ").trim())
+    const rows = Array.from(table.rows).map((tableRow) =>
+      Array.from(tableRow.cells).map((cell) => cell.textContent.replace(/\s+/g, " ").trim())
     );
     if (rows.length) tables.push({ heading, rows });
   });
@@ -76,24 +78,28 @@ function collectSummary() {
     const value = box.querySelector(".value")?.textContent?.trim();
     if (label) rows.push([label, value || ""]);
   });
-
   document.querySelectorAll("[data-build-up-summary] .visit-card-header").forEach((header) => {
-    const label = header.querySelector("span")?.textContent?.trim() || "積み上げ合計";
-    const value = header.querySelector("strong")?.textContent?.trim() || "";
-    rows.push([label, value]);
+    rows.push([
+      header.querySelector("span")?.textContent?.trim() || "積み上げ合計",
+      header.querySelector("strong")?.textContent?.trim() || "",
+    ]);
   });
-
   return rows;
 }
 
-function getBackupPayload() {
+function collectStorage() {
   const storage = {};
   for (let index = 0; index < window.localStorage.length; index += 1) {
     const key = window.localStorage.key(index);
     if (!key?.startsWith("mitsumori.")) continue;
-    storage[key] = safeJsonParse(window.localStorage.getItem(key), window.localStorage.getItem(key));
+    const rawValue = window.localStorage.getItem(key);
+    storage[key] = safeJsonParse(rawValue, rawValue);
   }
+  return storage;
+}
 
+function getBackupPayload() {
+  const storage = collectStorage();
   return {
     schemaVersion: SCHEMA_VERSION,
     exportedAt: new Date().toISOString(),
@@ -105,16 +111,24 @@ function getBackupPayload() {
   };
 }
 
-function cell(value, type = "String") {
-  return `<Cell><Data ss:Type="${type}">${xmlEscape(value)}</Data></Cell>`;
+function cell(value) {
+  return `<Cell><Data ss:Type="String">${xmlEscape(value)}</Data></Cell>`;
 }
 
 function row(values) {
-  return `<Row>${values.map((value) => cell(value)).join("")}</Row>`;
+  return `<Row>${values.map(cell).join("")}</Row>`;
 }
 
 function worksheet(name, rows) {
   return `<Worksheet ss:Name="${xmlEscape(name.slice(0, 31))}"><Table>${rows.join("")}</Table></Worksheet>`;
+}
+
+function splitText(text, size = JSON_CHUNK_SIZE) {
+  const chunks = [];
+  for (let offset = 0; offset < text.length; offset += size) {
+    chunks.push(text.slice(offset, offset + size));
+  }
+  return chunks;
 }
 
 function buildWorkbook(payload) {
@@ -122,7 +136,7 @@ function buildWorkbook(payload) {
     row(["項目", "内容"]),
     row(["スキーマ", payload.schemaVersion]),
     row(["出力日時", payload.exportedAt]),
-    ...Object.entries(payload.programBasicInfo || {}).map(([key, value]) => row([key, value])),
+    ...Object.entries(payload.programBasicInfo).map(([key, value]) => row([key, value])),
     ...payload.summary.map(([label, value]) => row([label, value])),
   ];
 
@@ -138,10 +152,12 @@ function buildWorkbook(payload) {
     tableRows.push(row([]));
   });
 
+  const jsonChunks = splitText(JSON.stringify(payload));
   const transferRows = [
-    row(["このシートはアプリ間連携・バックアップ用です。セルB2のJSONを編集しないでください。"]),
+    row(["アプリ間連携・バックアップ用データです。JSONチャンクを編集しないでください。"]),
     row(["schemaVersion", payload.schemaVersion]),
-    row(["payloadJson", JSON.stringify(payload)]),
+    row(["chunkCount", jsonChunks.length]),
+    ...jsonChunks.map((chunk, index) => row([`payloadJson_${index + 1}`, chunk])),
   ];
 
   return `<?xml version="1.0"?>
@@ -150,9 +166,7 @@ function buildWorkbook(payload) {
  xmlns:o="urn:schemas-microsoft-com:office:office"
  xmlns:x="urn:schemas-microsoft-com:office:excel"
  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
- <Styles>
-  <Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Font ss:FontName="Aptos" ss:Size="10"/></Style>
- </Styles>
+ <Styles><Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Font ss:FontName="Aptos" ss:Size="10"/></Style></Styles>
  ${worksheet("Summary", summaryRows)}
  ${worksheet("Inputs", inputRows)}
  ${worksheet("Calculation Tables", tableRows)}
@@ -169,8 +183,9 @@ function makeFilename(payload) {
 
 function downloadExcel() {
   const payload = getBackupPayload();
-  const workbook = buildWorkbook(payload);
-  const blob = new Blob([workbook], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const blob = new Blob([buildWorkbook(payload)], {
+    type: "application/vnd.ms-excel;charset=utf-8",
+  });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
@@ -178,7 +193,7 @@ function downloadExcel() {
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function ExportPanel() {
@@ -199,7 +214,7 @@ function ExportPanel() {
     <section className="estimate-export-panel no-print">
       <div>
         <strong>Excelバックアップ／アプリ間連携</strong>
-        <p>共通情報、入力値、計算表、再利用用JSONを1つのExcelファイルに保存します。</p>
+        <p>共通情報、入力値、計算表、再利用用データを1つのExcelファイルに保存します。</p>
       </div>
       <button className="btn estimate-export-button" type="button" onClick={handleExport}>
         Excelにエクスポート
@@ -216,7 +231,6 @@ export default function EstimateExcelExport() {
     const container = document.querySelector(".container");
     const tabs = container?.querySelector(".mode-tabs");
     if (!container || !tabs) return;
-
     const mount = document.createElement("div");
     mount.setAttribute("data-estimate-excel-export", "");
     container.insertBefore(mount, tabs);
