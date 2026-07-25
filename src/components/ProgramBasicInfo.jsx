@@ -26,10 +26,20 @@ const LEGACY_COMMON_LABELS = [
   "実施期間（週）",
 ];
 
+function normalizeWholeNumber(value, fallback, minimum) {
+  const number = Number(value);
+  return Number.isInteger(number) && number >= minimum ? String(number) : fallback;
+}
+
 function loadInfo() {
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
-    return saved ? { ...DEFAULT_INFO, ...JSON.parse(saved) } : DEFAULT_INFO;
+    const parsed = saved ? { ...DEFAULT_INFO, ...JSON.parse(saved) } : DEFAULT_INFO;
+    return {
+      ...parsed,
+      studentCount: normalizeWholeNumber(parsed.studentCount, DEFAULT_INFO.studentCount, 1),
+      escortCount: normalizeWholeNumber(parsed.escortCount, DEFAULT_INFO.escortCount, 0),
+    };
   } catch {
     return DEFAULT_INFO;
   }
@@ -93,8 +103,10 @@ function ProgramBasicInfoForm() {
     [info.startDate, info.endDate]
   );
   const durationWeeks = durationDays ? Math.max(1, Math.ceil(durationDays / 7)) : null;
-  const totalCount = Math.max(0, Number(info.studentCount) || 0)
-    + Math.max(0, Number(info.escortCount) || 0);
+  const studentCount = Number(info.studentCount);
+  const escortCount = Number(info.escortCount);
+  const totalCount = (Number.isInteger(studentCount) && studentCount >= 1 ? studentCount : 0)
+    + (Number.isInteger(escortCount) && escortCount >= 0 ? escortCount : 0);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(info));
@@ -124,6 +136,16 @@ function ProgramBasicInfoForm() {
 
   function update(key, value) {
     setInfo((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateWholeNumber(key, value, minimum) {
+    if (value === "") {
+      update(key, value);
+      return;
+    }
+    const number = Number(value);
+    if (!Number.isInteger(number) || number < minimum) return;
+    update(key, String(number));
   }
 
   function reset() {
@@ -184,7 +206,7 @@ function ProgramBasicInfoForm() {
             min="1"
             step="1"
             value={info.studentCount}
-            onChange={(event) => update("studentCount", event.target.value)}
+            onChange={(event) => updateWholeNumber("studentCount", event.target.value, 1)}
           />
         </Field>
         <Field label="引率者人数">
@@ -193,7 +215,7 @@ function ProgramBasicInfoForm() {
             min="0"
             step="1"
             value={info.escortCount}
-            onChange={(event) => update("escortCount", event.target.value)}
+            onChange={(event) => updateWholeNumber("escortCount", event.target.value, 0)}
           />
         </Field>
         <Field label="総人数（自動計算）">

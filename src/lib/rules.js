@@ -26,7 +26,7 @@ export function weekFactor(weeks) {
 // 条件2：参加者数見込み
 export function participantFactor(count) {
   const n = Number(count);
-  if (!Number.isFinite(n) || n <= 0) return null;
+  if (!Number.isInteger(n) || n <= 0) return null;
 
   if (n <= 10) return 1.5;
   if (n <= 15) return 1.3;
@@ -51,7 +51,7 @@ export function japaneseLessonFactor(hasJapaneseLesson, weeks) {
 // 条件4：文化体験（回数）
 export function culturalFactor(times) {
   const t = Number(times);
-  if (!Number.isFinite(t) || t < 0) return null;
+  if (!Number.isInteger(t) || t < 0) return null;
 
   if (t === 0) return 1.0;
   if (t <= 3) return 1.2;
@@ -68,7 +68,7 @@ export function culturalFactor(times) {
 // 条件7：企業訪問（回数）
 export function companyVisitFactor(times) {
   const t = Number(times);
-  if (!Number.isFinite(t) || t < 0) return null;
+  if (!Number.isInteger(t) || t < 0) return null;
 
   if (t === 0) return 1.0;
   if (t <= 3) return 1.2;
@@ -108,11 +108,11 @@ export function calcCostCheck({
   }
 
   const participantCount = Number(participants);
-  if (!Number.isFinite(participantCount) || participantCount <= 0) {
+  if (!Number.isInteger(participantCount) || participantCount <= 0) {
     return {
       ok: false,
       status: "invalid",
-      message: "参加人数を正しく入力してください。",
+      message: "参加人数は1以上の整数で入力してください。",
     };
   }
 
@@ -149,21 +149,32 @@ export function calcEstimate(input) {
 
   const weeks = Number(input.weeks);
   const participants = Number(input.participants);
+  const culturalTimes = Number(input.culturalTimes);
+  const companyVisitTimes = Number(input.companyVisitTimes);
 
   const fWeek = weekFactor(weeks);
   const fPart = participantFactor(participants);
   const fJp = japaneseLessonFactor(Boolean(input.hasJapaneseLesson), weeks);
-  const fCulture = culturalFactor(input.culturalTimes);
+  const fCulture = culturalFactor(culturalTimes);
   const fPrep = PREP_COMPLEXITY[input.prepComplexity] ?? null;
   const fLecture = LECTURE_FACTOR[input.lecture] ?? null;
-  const fCompany = companyVisitFactor(input.companyVisitTimes);
+  const fCompany = companyVisitFactor(companyVisitTimes);
 
-  if (Number(input.culturalTimes) > 30) {
+  if (!Number.isInteger(participants) || participants <= 0) {
+    warnings.push("参加人数は1以上の整数で入力してください。");
+  }
+  if (!Number.isInteger(culturalTimes) || culturalTimes < 0) {
+    warnings.push("文化体験回数は0以上の整数で入力してください。");
+  }
+  if (!Number.isInteger(companyVisitTimes) || companyVisitTimes < 0) {
+    warnings.push("企業訪問回数は0以上の整数で入力してください。");
+  }
+  if (culturalTimes > 30) {
     warnings.push(
       "文化体験回数が30を超えています（表外）。係数は最大(3.0)で計算しています。"
     );
   }
-  if (Number(input.companyVisitTimes) > 9) {
+  if (companyVisitTimes > 9) {
     warnings.push(
       "企業訪問回数が9を超えています（表外）。係数は最大(1.6)で計算しています。"
     );
@@ -215,7 +226,7 @@ export function calcEstimate(input) {
     mgmtFee === null ||
     !Number.isFinite(baseWeeklyPrice) ||
     !Number.isFinite(insurance) ||
-    !Number.isFinite(participants) ||
+    !Number.isInteger(participants) ||
     participants <= 0
   ) {
     return {

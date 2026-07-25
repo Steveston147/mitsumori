@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { evaluateBuildUpSection, readBuildUpSectionState } from "../lib/buildUpStatus.js";
+import { ESTIMATE_SECTION_CHANGE_EVENT } from "../state/useEstimateSectionState.js";
 import "./BuildUpWorkspace.css";
 
 const VIEW_KEY = "mitsumori.buildUpWorkspaceView";
@@ -129,25 +131,18 @@ function applyView(root, view) {
 }
 
 function readStatus(section, amount, root) {
-  if (section.key === "summary") {
-    return amount > 0 ? { label: "確認可能", tone: "complete" } : { label: "入力待ち", tone: "empty" };
-  }
-  if (amount > 0) return { label: "入力済み", tone: "complete" };
+  const countLabel = section.key === "company"
+    ? "企業訪問（回数）"
+    : section.key === "culture"
+      ? "日本文化体験（回数）"
+      : null;
 
-  try {
-    const raw = window.localStorage.getItem(`mitsumori.estimateState.${section.key === "japanese" ? "japaneseCourse" : section.key === "collaboration" ? "studentCollaboration" : section.key === "common" ? "commonCosts" : section.key === "company" ? "companyVisits" : "culturalActivities"}`);
-    if (raw && /"unitPrice":"(?!")|"hourlyRate":"(?!")/.test(raw)) {
-      return { label: "入力中", tone: "progress" };
-    }
-  } catch {
-    // Status display must never interrupt estimate entry.
-  }
-
-  const countLabel = section.key === "company" ? "企業訪問（回数）" : section.key === "culture" ? "日本文化体験（回数）" : null;
-  if (countLabel && Number(findInputValue(root, countLabel)) > 0) {
-    return { label: "設定が必要", tone: "attention" };
-  }
-  return { label: "未設定", tone: "empty" };
+  return evaluateBuildUpSection({
+    sectionKey: section.key,
+    amount,
+    count: countLabel ? findInputValue(root, countLabel) : null,
+    state: readBuildUpSectionState(section.key),
+  });
 }
 
 function EditorFooter({ amount, onComplete }) {
@@ -201,10 +196,12 @@ function Workspace({ root }) {
     observer.observe(root, { subtree: true, childList: true, characterData: true });
     root.addEventListener("input", refresh);
     root.addEventListener("change", refresh);
+    window.addEventListener(ESTIMATE_SECTION_CHANGE_EVENT, refresh);
     return () => {
       observer.disconnect();
       root.removeEventListener("input", refresh);
       root.removeEventListener("change", refresh);
+      window.removeEventListener(ESTIMATE_SECTION_CHANGE_EVENT, refresh);
     };
   }, [root, view]);
 
@@ -254,7 +251,7 @@ function Workspace({ root }) {
         <div>
           <span className="build-up-eyebrow">積み上げ方式・費用ダッシュボード</span>
           <h3>入力する費用カテゴリーを選択</h3>
-          <p>すべての入力欄を一度に表示せず、作業するカテゴリーだけを開きます。</p>
+          <p>カードで入力状況を確認し、必要なカテゴリーだけを開きます。</p>
         </div>
         <div className="build-up-direct-total">
           <span>入力済み直接経費</span>
@@ -265,6 +262,13 @@ function Workspace({ root }) {
       <div className="build-up-category-grid">
         {SECTIONS.map((section) => {
           const status = readStatus(section, amounts[section.key], root);
+          const action = section.key === "summary"
+            ? "確認する"
+            : status.tone === "complete"
+              ? "編集する"
+              : status.tone === "excluded"
+                ? "変更する"
+                : "設定する";
           return (
             <button
               type="button"
@@ -275,9 +279,10 @@ function Workspace({ root }) {
               <span className={`build-up-status ${status.tone}`}>{status.label}</span>
               <span className="build-up-category-title">{section.title}</span>
               <span className="build-up-category-description">{section.description}</span>
+              <span className="build-up-category-progress">{status.detail}</span>
               <span className="build-up-category-footer">
                 <strong>{formatYen(amounts[section.key])}</strong>
-                <span>{section.key === "summary" ? "確認する" : amounts[section.key] > 0 ? "編集する" : "設定する"} →</span>
+                <span>{action} →</span>
               </span>
             </button>
           );
