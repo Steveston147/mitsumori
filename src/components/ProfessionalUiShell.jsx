@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import "./ProfessionalUiShell.css";
+import "./ProfessionalUiPolish.css";
 
 function getVisibleMode() {
   return document.querySelector(".mode-tab.active")?.textContent?.trim() || "見積方式を選択";
@@ -24,9 +25,17 @@ function Header() {
   return (
     <header className="app-hero no-print">
       <div className="app-hero-copy">
-        <div className="app-product-kicker">PROGRAM ESTIMATE BUILDER</div>
+        <div className="app-hero-meta">
+          <span className="app-product-kicker">PROGRAM ESTIMATE BUILDER</span>
+          <span className="app-context-badge">内部業務用</span>
+        </div>
         <h1>短期留学プログラムの見積を、正確に、迷わず。</h1>
-        <p>案件情報から費用内訳、見積結果までを一つの画面で確認できる業務用見積ツールです。</p>
+        <p>案件情報から費用内訳、見積結果までを一つの流れで整理する、短期受入プログラム向けの見積作成ツールです。</p>
+        <div className="app-capability-list" aria-label="主な機能">
+          <span>係数方式</span>
+          <span>積み上げ方式</span>
+          <span>Excel保存・再読込</span>
+        </div>
       </div>
       <div className="app-hero-visual" aria-hidden="true">
         <svg viewBox="0 0 240 150" role="img">
@@ -51,8 +60,10 @@ function StatusBar() {
       setMode(getVisibleMode());
       setCompletion(getCompletion());
     };
+    const container = document.querySelector(".container");
+    if (!container) return undefined;
     const observer = new MutationObserver(refresh);
-    observer.observe(document.querySelector(".container"), {
+    observer.observe(container, {
       subtree: true,
       childList: true,
       attributes: true,
@@ -74,14 +85,14 @@ function StatusBar() {
   }, [completion]);
 
   return (
-    <section className="workflow-status no-print" aria-label="入力状況">
+    <section className="workflow-status no-print" aria-label="作業状況">
       <div className="workflow-status-main">
         <span className="workflow-label">現在の見積方式</span>
         <strong>{mode}</strong>
       </div>
       <div className="workflow-progress" aria-label={`入力状況 ${percent}%`}>
         <div className="workflow-progress-copy">
-          <span>入力状況</span>
+          <span>入力状況の目安</span>
           <strong>{completion.completed} / {completion.total} 項目</strong>
         </div>
         <div className="workflow-progress-track">
@@ -90,7 +101,13 @@ function StatusBar() {
       </div>
       <div className="workflow-guide">
         <span className="workflow-guide-dot" />
-        入力内容はブラウザ内に保持されます。区切りごとにExcelへ保存してください。
+        入力内容はブラウザ内に保持されます。作業の区切りでExcelへ保存してください。
+      </div>
+      <div className="workflow-steps" aria-label="基本的な作業手順">
+        <span><b>1</b> 基礎情報</span>
+        <span><b>2</b> 条件・費用入力</span>
+        <span><b>3</b> サマリー確認</span>
+        <span><b>4</b> Excel保存</span>
       </div>
     </section>
   );
