@@ -13,6 +13,8 @@ import ProjectWorkspace from "./components/ProjectWorkspace.jsx";
 import ProfessionalUiShell from "./components/ProfessionalUiShell.jsx";
 import BuildUpWorkspace from "./components/BuildUpWorkspace.jsx";
 import BuildUpSaveStatus from "./components/BuildUpSaveStatus.jsx";
+import FinalEstimateCheck from "./components/FinalEstimateCheck.jsx";
+import FinalCheckNavigationBridge from "./components/FinalCheckNavigationBridge.jsx";
 import "./components/BuildUpWorkspaceCompat.css";
 import "./styles.css";
 
@@ -26,6 +28,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <EstimateExcelImport />
     <BuildUpWorkspace />
     <BuildUpSaveStatus />
+    <FinalEstimateCheck />
+    <FinalCheckNavigationBridge />
     <JapaneseCourseCosts />
     <StudentCollaborationCosts />
     <CommonCosts />
