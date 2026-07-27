@@ -25,15 +25,28 @@ function getCompletion() {
   return { completed: meaningful.length, total: controls.length };
 }
 
+function findAmountInText(text) {
+  const currencyMatches = Array.from(text.matchAll(/[¥￥]\s*([\d,]+)/g));
+  if (currencyMatches.length) {
+    return Number(currencyMatches.at(-1)[1].replaceAll(",", ""));
+  }
+
+  const yenMatches = Array.from(text.matchAll(/([\d,]+)\s*円/g));
+  if (yenMatches.length) {
+    return Number(yenMatches.at(-1)[1].replaceAll(",", ""));
+  }
+
+  return null;
+}
+
 function extractAmount(labels) {
   const candidates = Array.from(document.querySelectorAll(".container *"));
   for (const element of candidates) {
     const label = element.textContent?.trim() || "";
     if (!labels.some((text) => label === text || label.startsWith(text))) continue;
     const scope = element.closest(".card, .box, .build-up-review-panel, .build-up-workspace, section, article, div");
-    const text = scope?.textContent || element.parentElement?.textContent || "";
-    const amounts = Array.from(text.matchAll(/(?:¥|￥)?\s*([\d,]+)\s*円/g));
-    if (amounts.length) return `${Number(amounts.at(-1)[1].replaceAll(",", "")).toLocaleString("ja-JP")}円`;
+    const amount = findAmountInText(scope?.textContent || element.parentElement?.textContent || "");
+    if (Number.isFinite(amount)) return `${amount.toLocaleString("ja-JP")}円`;
   }
   return "—";
 }
@@ -42,7 +55,7 @@ function getMetrics() {
   const studentInput = Array.from(document.querySelectorAll("input"))
     .find((input) => input.closest("label, div")?.textContent?.includes("学生人数"));
   const metrics = {
-    estimateTotal: extractAmount(["見積金額合計", "見積総額", "合計金額", "総額"]),
+    estimateTotal: extractAmount(["見積サマリー", "見積金額合計", "見積総額", "合計金額", "総額"]),
     directExpense: extractAmount(["直接経費合計", "入力済み直接経費", "直接経費"]),
     studentCount: studentInput?.value ? `${studentInput.value}名` : "—",
   };
