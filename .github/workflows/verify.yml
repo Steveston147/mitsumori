@@ -21,11 +21,10 @@ jobs:
       - name: Node.jsを準備
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: 24
 
-      - name: 依存パッケージを固定状態でインストール
-        run: npm ci
+      - name: 依存パッケージをインストール
+        run: npm install --no-audit --no-fund
 
       - name: 自動テスト
         run: npm test
