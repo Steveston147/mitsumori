@@ -1,9 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { calculatePerPersonEstimate } from "../lib/estimatePresentation";
 import { MetricCard, SidebarNavButton } from "./ProfessionalUiPrimitives";
 import "./ProfessionalUiShell.css";
 import "./ProfessionalUiPolish.css";
 import "./ProfessionalUiV2.css";
+import "./ProfessionalUiEnhancements.css";
+import "./PerPersonEstimate.css";
 
 function getVisibleMode() {
   return document.querySelector(".mode-tab.active")?.textContent?.trim() || "見積方式を選択";
@@ -22,15 +25,28 @@ function getCompletion() {
   return { completed: meaningful.length, total: controls.length };
 }
 
+function findAmountInText(text) {
+  const currencyMatches = Array.from(text.matchAll(/[¥￥]\s*([\d,]+)/g));
+  if (currencyMatches.length) {
+    return Number(currencyMatches.at(-1)[1].replaceAll(",", ""));
+  }
+
+  const yenMatches = Array.from(text.matchAll(/([\d,]+)\s*円/g));
+  if (yenMatches.length) {
+    return Number(yenMatches.at(-1)[1].replaceAll(",", ""));
+  }
+
+  return null;
+}
+
 function extractAmount(labels) {
   const candidates = Array.from(document.querySelectorAll(".container *"));
   for (const element of candidates) {
     const label = element.textContent?.trim() || "";
     if (!labels.some((text) => label === text || label.startsWith(text))) continue;
     const scope = element.closest(".card, .box, .build-up-review-panel, .build-up-workspace, section, article, div");
-    const text = scope?.textContent || element.parentElement?.textContent || "";
-    const amounts = Array.from(text.matchAll(/(?:¥|￥)?\s*([\d,]+)\s*円/g));
-    if (amounts.length) return `${Number(amounts.at(-1)[1].replaceAll(",", "")).toLocaleString("ja-JP")}円`;
+    const amount = findAmountInText(scope?.textContent || element.parentElement?.textContent || "");
+    if (Number.isFinite(amount)) return `${amount.toLocaleString("ja-JP")}円`;
   }
   return "—";
 }
@@ -38,10 +54,14 @@ function extractAmount(labels) {
 function getMetrics() {
   const studentInput = Array.from(document.querySelectorAll("input"))
     .find((input) => input.closest("label, div")?.textContent?.includes("学生人数"));
-  return {
-    estimateTotal: extractAmount(["見積金額合計", "見積総額", "合計金額", "総額"]),
+  const metrics = {
+    estimateTotal: extractAmount(["見積サマリー", "見積金額合計", "見積総額", "合計金額", "総額"]),
     directExpense: extractAmount(["直接経費合計", "入力済み直接経費", "直接経費"]),
     studentCount: studentInput?.value ? `${studentInput.value}名` : "—",
+  };
+  return {
+    ...metrics,
+    perPerson: calculatePerPersonEstimate(metrics.estimateTotal, metrics.studentCount),
   };
 }
 
@@ -62,7 +82,24 @@ function findSectionByText(text) {
     .find((element) => element.textContent?.includes(text));
 }
 
-function Sidebar({ mode, completion, activeItem, onNavigate }) {
+function PerPersonEstimate({ metrics }) {
+  return (
+    <section className={`estimate-sidebar-per-person ${metrics.perPerson.available ? "is-available" : "is-unavailable"}`} aria-live="polite">
+      <div className="estimate-sidebar-per-person-label">
+        <span aria-hidden="true">人</span>
+        1人当たり概算
+      </div>
+      <strong>{metrics.perPerson.display}</strong>
+      <dl>
+        <div><dt>現在の総額</dt><dd>{metrics.estimateTotal}</dd></div>
+        <div><dt>学生人数</dt><dd>{metrics.studentCount}</dd></div>
+      </dl>
+      <small>現在入力済みの条件による概算です</small>
+    </section>
+  );
+}
+
+function Sidebar({ mode, completion, metrics, activeItem, onNavigate }) {
   const percent = completion.total ? Math.min(100, Math.round((completion.completed / completion.total) * 100)) : 0;
   const navigate = (item, action) => { onNavigate(item); action(); };
   return (
@@ -76,6 +113,7 @@ function Sidebar({ mode, completion, activeItem, onNavigate }) {
         <SidebarNavButton icon="X" active={activeItem === "excel"} onClick={() => navigate("excel", () => scrollToElement(findSectionByText("Excel")))}>Excelファイル</SidebarNavButton>
       </nav>
       <div className="estimate-sidebar-status"><span>現在の方式</span><strong>{mode}</strong><div className="estimate-sidebar-progress" aria-label={`入力状況 ${percent}%`}><span style={{ width: `${percent}%` }} /></div><small>{completion.completed} / {completion.total} 項目入力</small></div>
+      <PerPersonEstimate metrics={metrics} />
       <div className="estimate-sidebar-note"><strong>Excelを正本として管理</strong><span>作業の区切りでExcelへ出力してください。</span></div>
     </aside>
   );
@@ -142,5 +180,5 @@ export default function ProfessionalUiShell() {
     return () => { container.classList.remove("professional-app-shell", "professional-app-shell-v2"); document.body.classList.remove("estimate-ui-v2"); originalTitle.classList.remove("legacy-app-title"); sidebarMount.remove(); headerMount.remove(); statusMount.remove(); };
   }, []);
 
-  return <>{sidebarTarget ? createPortal(<Sidebar mode={mode} completion={completion} activeItem={activeItem} onNavigate={setActiveItem} />, sidebarTarget) : null}{headerTarget ? createPortal(<Header />, headerTarget) : null}{statusTarget ? createPortal(<StatusBar mode={mode} completion={completion} metrics={metrics} />, statusTarget) : null}</>;
+  return <>{sidebarTarget ? createPortal(<Sidebar mode={mode} completion={completion} metrics={metrics} activeItem={activeItem} onNavigate={setActiveItem} />, sidebarTarget) : null}{headerTarget ? createPortal(<Header />, headerTarget) : null}{statusTarget ? createPortal(<StatusBar mode={mode} completion={completion} metrics={metrics} />, statusTarget) : null}</>;
 }
