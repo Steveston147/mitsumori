@@ -1,0 +1,164 @@
+.app-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.app-hero-meta .app-product-kicker {
+  margin-bottom: 0;
+}
+
+.app-context-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 9px;
+  border: 1px solid #c8dcfa;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #365b86;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.app-capability-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.app-capability-list span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid rgba(197, 208, 223, 0.9);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #475467;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.workflow-status {
+  grid-template-columns: minmax(170px, 0.7fr) minmax(250px, 1fr) minmax(280px, 1.25fr);
+}
+
+.workflow-steps {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e6ebf2;
+}
+
+.workflow-steps span {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #e3e9f1;
+  border-radius: 9px;
+  background: #f8fafc;
+  color: #526075;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.workflow-steps b {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e7effc;
+  color: var(--app-primary-dark);
+  font-size: 11px;
+}
+
+.professional-app-shell .mode-tabs {
+  position: relative;
+  overflow: hidden;
+}
+
+.professional-app-shell .mode-tab.active::before {
+  content: "";
+  position: absolute;
+  inset: auto 18% 0;
+  height: 3px;
+  border-radius: 999px 999px 0 0;
+  background: var(--app-primary);
+}
+
+.professional-app-shell .mode-tab {
+  position: relative;
+}
+
+.professional-app-shell .card,
+.professional-app-shell .visit-card,
+.build-up-workspace {
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.professional-app-shell .card:hover,
+.professional-app-shell .visit-card:hover {
+  border-color: #c4d1e1;
+  box-shadow: 0 8px 20px rgba(31, 42, 68, 0.06);
+}
+
+.professional-app-shell input::placeholder,
+.professional-app-shell textarea::placeholder {
+  color: #98a2b3;
+}
+
+.professional-app-shell .table {
+  border: 1px solid #e6ebf2;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.professional-app-shell .table tr:last-child th,
+.professional-app-shell .table tr:last-child td {
+  border-bottom: 0;
+}
+
+@media (max-width: 980px) {
+  .workflow-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .app-capability-list {
+    gap: 6px;
+  }
+
+  .app-capability-list span {
+    font-size: 11px;
+  }
+
+  .workflow-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-steps span {
+    min-height: 42px;
+  }
+}
+
+@media print {
+  .workflow-steps,
+  .app-capability-list,
+  .app-context-badge {
+    display: none !important;
+  }
+}
+
+/* Deployment retry marker: no visual or functional change. */
