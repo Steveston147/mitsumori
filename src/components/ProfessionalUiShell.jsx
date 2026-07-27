@@ -26,11 +26,11 @@ function Header() {
     <header className="app-hero no-print">
       <div className="app-hero-copy">
         <div className="app-hero-meta">
-          <span className="app-product-kicker">PROGRAM ESTIMATE BUILDER</span>
+          <span className="app-product-kicker">CUSTOM PROGRAM ESTIMATE</span>
           <span className="app-context-badge">内部業務用</span>
         </div>
-        <h1>短期留学プログラムの見積を、正確に、迷わず。</h1>
-        <p>案件情報から費用内訳、見積結果までを一つの流れで整理する、短期受入プログラム向けの見積作成ツールです。</p>
+        <h1>短期留学プログラム見積管理</h1>
+        <p>案件情報、費用内訳、見積結果を一つの流れで整理する、短期受入プログラム向けの内部業務用ツールです。</p>
         <div className="app-capability-list" aria-label="主な機能">
           <span>係数方式</span>
           <span>積み上げ方式</span>
