@@ -1,4 +1,5 @@
 import React from "react";
+import "./ProfessionalUiEnhancements.css";
 
 export function UiIcon({ children, tone = "green" }) {
   return <span className={`ui-v2-icon ui-v2-icon-${tone}`} aria-hidden="true">{children}</span>;
